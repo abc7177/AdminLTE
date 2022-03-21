@@ -13,7 +13,7 @@
     // 	exit;
     // }
 
-    $query0 = "SELECT account.*, batch.batch_code FROM account 
+    $query0 = "SELECT account.*, batch.batch_code, batch.batch_id FROM account 
 			LEFT JOIN batch_sub ON batch_sub.account_id = account.account_id 
 			LEFT JOIN batch ON batch_sub.batch_id = batch.batch_id 
 			WHERE account.account_id = '".mysqli_real_escape_string($con,$_GET["id"])."'";
@@ -43,6 +43,18 @@
                 $studentStatus = 'Inactive';
             }
 
+			if(isset($_POST["studentFinancing"])){
+				$studentFinancing = 'Loan';
+			} else {
+				$studentFinancing = 'Cash';
+			}
+	
+			if(isset($_POST["studentHostel"])){
+				$studentHostel = 'Yes';
+			} else {
+				$studentHostel = 'No';
+			}
+
             if($_POST["account_password"] != ""){
                 $hashedPassword = password_hash(mysqli_real_escape_string($con,$_POST["account_password"]), PASSWORD_DEFAULT);
                 $passwordQuery = "account_password = '" . $hashedPassword . "',";
@@ -55,7 +67,7 @@
             $query = "UPDATE account SET 
                         account_name = '" . mysqli_real_escape_string($con, $_POST["studentName"]) . "', 
                         account_ic = '" . mysqli_real_escape_string($con, $_POST["studentICNumber"]) . "', 
-                        account_dob = STR_TO_DATE('" . mysqli_real_escape_string($con, $_POST["studentDOB"]) . "', '%d/%m/%Y'), 
+                        account_dob = '" . mysqli_real_escape_string($con, $_POST["studentDOB"]) . "', 
                         account_email = '" . mysqli_real_escape_string($con, $_POST["studentEmail"]) . "', 
                         account_phone_no = '" . mysqli_real_escape_string($con, $_POST["studentPhoneNumber"]) . "', 
                         account_e_name = '" . mysqli_real_escape_string($con, $_POST["studentEmergencyName"]) . "', 
@@ -66,16 +78,39 @@
 						account_e_phone_no_2 = '" . mysqli_real_escape_string($con, $_POST["studentEmergencyPhone2"]) . "', 
                         account_address_line1 = '" . mysqli_real_escape_string($con, $_POST["studentAddressLine1"]) . "', 
                         account_address_line2 = '" . mysqli_real_escape_string($con, $_POST["studentAddressLine2"]) . "', 
-                        account_postcode = '" . mysqli_real_escape_string($con, $_POST["studentPostcode"]) . "', 
-                        account_state = '" . mysqli_real_escape_string($con, $_POST["studentState"]) . "', 
-                        account_country = '" . mysqli_real_escape_string($con, $_POST["studentCountry"]) . "', 
-                        account_enroll_date = STR_TO_DATE('" . mysqli_real_escape_string($con, $_POST["studentEnrollDate"]) . "', '%d/%m/%Y'), 
+                        account_postcode = '" . mysqli_real_escape_string($con, $_POST["studentPostcode"]) . "', ";
+
+            if(isset($_POST["studentState"]))	
+				$query .= "account_state = '" . mysqli_real_escape_string($con, $_POST["studentState"]) . "', ";
+			
+			if(isset($_POST["studentCountry"]))		
+				$query .= "account_country = '" . mysqli_real_escape_string($con, $_POST["studentCountry"]) . "', ";
+            	$query .= "account_enroll_date = '" . mysqli_real_escape_string($con, $_POST["studentEnrollDate"]) . "', 
                         account_status = '" . $studentStatus . "', 
+						account_hostel = '" . $studentHostel . "', 
+						account_financing = '" . $studentFinancing . "', 
                         account_remark = '" . mysqli_real_escape_string($con, $_POST["studentDescription"]) . "', 
                         $passwordQuery
-                        account_level_id = '2',
-                        account_type = 'student' WHERE account_id = '".mysqli_real_escape_string($con,$_GET["id"])."'";
+                        account_level_id = '3' 
+                       	WHERE account_id = '".mysqli_real_escape_string($con,$_GET["id"])."'";
             $result = mysqli_query($con, $query);
+
+			$query = "SELECT * FROM batch_sub WHERE batch_id = '". mysqli_real_escape_string($con, $row0["batch_id"]) ."' 
+					AND account_id = '".mysqli_real_escape_string($con,$_GET["id"])."'";
+			$result = mysqli_query($con, $query);
+			// echo $query;
+
+			if(!($row = mysqli_fetch_assoc($result))){ // No batch registered previously
+				$query = "INSERT INTO batch_sub SET 
+					batch_id = '" . mysqli_real_escape_string($con, $_POST["studentBatchNumber"]) . "', 				
+					account_id = '".mysqli_real_escape_string($con,$_GET["id"])."'";
+			} else {	// Batch registered previously
+				$query = "UPDATE batch_sub SET 
+						batch_id = '" . mysqli_real_escape_string($con, $_POST["studentBatchNumber"]) . "' 
+						WHERE batch_sub_id = '". mysqli_real_escape_string($con, $row["batch_sub_id"]) ."'";
+			}
+			// echo $query;
+			$result = mysqli_query($con, $query);
 
             echo '<script>localStorage.setItem("Updated",1)</script>';	// Successful updated flag.
             echo "<script>window.location='student_edit.php?id=".mysqli_real_escape_string($con,$_GET["id"])."'</script>";	
@@ -141,13 +176,13 @@
 				<form name="add_student" id="add_student" class="col-lg-12" method="POST">
 					<div class="row">
 						<div class="col-md-5">
-							<div class="card card-primary">
+							<div class="card card-primary collapsed-card">
 								<div class="card-header">
 									<h3 class="card-title">General</h3>
 
 									<div class="card-tools">
 										<button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
-											<i class="fas fa-minus"></i>
+											<i class="fas fa-plus"></i>
 										</button>
 									</div>
 								</div>
@@ -167,12 +202,12 @@
 											<?php
 											$datetime = '';
 											if($row0["account_dob"] != "0000-00-00"){
-												$datetime = date('d/m/Y', strtotime($row0["account_dob"]));
+												$datetime = date('Y-m-d', strtotime($row0["account_dob"]));
 											}
 											?>
-											<input type="text" name="studentDOB" id="studentDOB" class="form-control" data-inputmask-alias="datetime" data-inputmask-inputformat="dd/mm/yyyy" data-mask value="<?php echo $datetime ?>">
+											<input type="date" name="studentDOB" id="studentDOB" class="form-control" value="<?php echo $datetime ?>">
 											<div class="input-group-prepend">
-												<span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+												<!-- <span class="input-group-text"><i class="far fa-calendar-alt"></i></span> -->
 											</div>
 										</div>
 									</div>
@@ -250,7 +285,7 @@
 												<div class="input-group">
                                                     <select class="form-control" name="studentState" id="studentState">
                                                         <?php
-                                                            echo '<option value="" selected readonly>----- State -----</option>';
+                                                            echo '<option value="" selected disabled>----- State -----</option>';
                                                             $query = "select * from state";
                                                             $result = mysqli_query($con, $query);
                                                             while($row = mysqli_fetch_assoc($result)){
@@ -271,7 +306,7 @@
 												<div class="input-group">
                                                     <select class="form-control" name="studentCountry" id="studentCountry">
                                                     <?php
-                                                        echo '<option value="" selected readonly>----- Country -----</option>';
+                                                        echo '<option value="" selected disabled>----- Country -----</option>';
                                                         $query = "select * from country";
                                                         $result = mysqli_query($con, $query);
                                                         while($row = mysqli_fetch_assoc($result)){
@@ -291,9 +326,9 @@
 											<div class="form-group col-lg-6">
 												<label for="inputName">Date Of Enrollment</label>
 												<div class="input-group">
-													<input type="text" name="studentEnrollDate" id="studentEnrollDate" class="form-control" data-inputmask-alias="datetime" data-inputmask-inputformat="dd/mm/yyyy" data-mask value="<?php echo date('d/m/Y', strtotime($row0["account_enroll_date"])) ?>">
+													<input type="date" name="studentEnrollDate" id="studentEnrollDate" class="form-control" value="<?php echo date('Y-m-d', strtotime($row0["account_enroll_date"])) ?>">
 													<div class="input-group-prepend">
-														<span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+														<!-- <span class="input-group-text"><i class="far fa-calendar-alt"></i></span> -->
 													</div>
 												</div>
 											</div>
@@ -304,7 +339,47 @@
 											<div class="form-group col-lg-6">
 												<label for="inputName">Batch Number</label>
 												<div class="input-group">
-													<input type="text" name="studentBatchNumber" id="studentBatchNumber" class="form-control" readonly value="<?php echo$row0["batch_code"]; ?>">													
+													<!-- <input type="text" name="studentBatchNumber" id="studentBatchNumber" class="form-control" readonly value="<?php echo $row0["batch_code"]; ?>">													 -->
+											
+                                                    <select class="form-control" name="studentBatchNumber" id="studentBatchNumber">
+                                                    <?php
+                                                        echo '<option value="" selected>----- Batch -----</option>';
+                                                        $query = "select * from batch";
+                                                        $result = mysqli_query($con, $query);
+                                                        while($row = mysqli_fetch_assoc($result)){
+                                                            echo '<option value="'.$row["batch_id"].'" ';
+                                                            if($row0["batch_id"] == $row["batch_id"])
+																echo 'selected ';
+                                                            echo '>'.$row["batch_code"].'</option>';
+                                                        }
+                                                    ?>
+                                                    </select>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="form-group" style="margin-bottom:0px;">
+										<div class="row">
+											<div class="form-group col-lg-6">
+												<label for="studentHostel">Hostel &nbsp;</label>
+												<div class="input-group">
+													<input type="checkbox" name="studentHostel" id="studentHostel" 
+													<?php 
+                                                        if($row0["account_hostel"] == "Yes")
+                                                            echo "checked"; 
+                                                    ?> 
+													data-bootstrap-switch data-off-text="No" data-off-color="danger" data-on-text="Yes" data-on-color="success" data-size="medium">
+												</div>
+											</div>
+											<div class="form-group col-lg-6">
+												<label for="studentFinancing">Financing &nbsp;</label>
+												<div class="input-group">
+													<input type="checkbox" name="studentFinancing" id="studentFinancing" 
+													<?php 
+                                                        if($row0["account_financing"] == "Loan")
+                                                            echo "checked"; 
+                                                    ?> 
+													data-bootstrap-switch data-off-text="Cash" data-off-color="yellow" data-on-text="Loan" data-on-color="blue" data-size="medium">
 												</div>
 											</div>
 										</div>
@@ -334,13 +409,13 @@
 							<!-- /.card -->
 						</div>
 						<div class="col-md-7">
-							<div class="card card-info">
+							<div class="card card-info  collapsed-card">
 								<div class="card-header">
 									<h3 class="card-title">Login Information</h3>
 
 									<div class="card-tools">
 										<button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
-											<i class="fas fa-minus"></i>
+											<i class="fas fa-plus"></i>
 										</button>
 									</div>
 								</div>
@@ -383,8 +458,10 @@
 								</div>
 								<!-- /.card -->
 								
-							</div>
-							<div class="card card-secondary">
+							</div>							
+						</div>
+						<div class="col-md-12">
+						<div class="card card-secondary">
 								<div class="card-header">
 									<h3 class="card-title">Course Information</h3>
 
@@ -405,62 +482,63 @@
 										</div>
 										<!-- ./card-header -->
 										<div class="card-body p-0">
-											<table id="courseTable" class="table table-borderless">
-											<tbody>
-											<tr>
-												<td colspan='2'><button type="button" id="addCourse" class="btn btn-sm" style="background-color:transparent" ><i class="fas fa-plus"></i> Add New Course</button></td>
-											</tr>
-											<?php
-												$query1 = "SELECT * FROM student_course 
-															LEFT JOIN course
-															ON student_course.course_id = course.course_id 
-															LEFT JOIN course_group 
-															ON student_course.course_group_id = course_group.group_id 
-															WHERE student_course.account_id = '".mysqli_real_escape_string($con,$_GET["id"])."'";
-												$result1 = mysqli_query($con, $query1);
+											<div style='overflow:auto; width:100%;position:relative;'>
+												<table id="courseTable" class="table table-borderless table-hover">
+												<tbody>
+												<tr>
+													<td colspan='6'><button type="button" id="addCourse" class="btn btn-sm" style="background-color:transparent" ><i class="fas fa-plus"></i> Add New Course</button></td>
+												</tr>
+												<?php
+													$query1 = "SELECT * FROM student_course 
+																LEFT JOIN course
+																ON student_course.course_id = course.course_id 
+																LEFT JOIN course_group 
+																ON student_course.course_group_id = course_group.group_id 
+																WHERE student_course.account_id = '".mysqli_real_escape_string($con,$_GET["id"])."'";
+													$result1 = mysqli_query($con, $query1);
 
-												if(mysqli_num_rows($result1) != 0){
-													echo "<tr class='' id='enrolledCourseHeader'><td style='width: 120px;'>Code</td><td>Name</td><td style='width: 110px;'>Group</td><td style='width: 110px;'>Start Date</td><td style='text-align: center;width: 90px;'>Status</td><td style='text-align: center;width: 100px;'>Action</td></tr>";
-												}
-												while($row1 = mysqli_fetch_assoc($result1)){
-													echo "<tr><td>".
-													"<select class='form-control form-control-sm courseCode' style='appearance: none' name='courseCode' >";
-													echo '"<option value=\'0\' selected>----------</option>"+';		
-													$query = "select course_id, course_code from course";
-													$result = mysqli_query($con, $query);
-													while($row = mysqli_fetch_assoc($result)){
-														echo	'"<option value=\''.$row["course_id"].'\'';
-														if($row1["course_id"] == $row["course_id"])
-															echo "selected";
-														echo '>'.$row["course_code"].'</option>"+';
-													}			
-													echo "</select></td>".
-													"<td><input type='hidden' name='scId' class='form-control form-control-sm' value='".$row1["sc_id"]."'>".
-													"<input type='text' name='courseName' class='form-control form-control-sm'  value='".$row1["course_name"]."' readonly></td>".
-													"<td>".
-													"<select name='courseGroup' class='form-control form-control-sm courseGroup' style='appearance: none'>".
-													"<option value=\'0\' selected>----------</option>";
-													$query = "select group_id, group_name from course_group";
-													$result = mysqli_query($con, $query);
-													while($row = mysqli_fetch_assoc($result)){
-														echo	'"<option value=\''.$row["group_id"].'\'';
-														if($row1["group_id"] == $row["group_id"])
-															echo "selected";
-														echo '>'.$row["group_name"].'</option>"+';
-													}		
-													echo "</select></td>".
-													"<td style='text-align: center;'>".
-													"<input type='text' name='courseStartDate' class='form-control form-control-sm'  value='".$row1["course_start_date"]."' readonly></td>".
-													"<td style='text-align: center;'>".
-													"<input type='text' name='courseStatus' class='form-control form-control-sm'  value='".$row1["course_status"]."' readonly></td>".
-													"<td style='text-align: center;background-color: transparent;'><button class='btn btn-sm courseDelBtn red-icon'>".
-													"<i class='fa fa-trash-alt'></i></button><button class='btn btn-sm courseSaveBtn green-icon'><i class='fas fa-check'></i></button>".
-													"</td></tr>";
-												}
-											?>
-												
-											</tbody>
-											</table>
+													if(mysqli_num_rows($result1) != 0){
+														echo "<tr class='' id='enrolledCourseHeader'><td><div style='width:150px;'>Code</div></td><td><div style='width:400px;'>Name</div></td><td><div style='width:150px;'>Group</div></td><td><div style='width:150px;text-align: center;'>Status</div></td><td ><div style='width:100px;text-align: center;'>Action</td></tr>";
+													}
+													while($row1 = mysqli_fetch_assoc($result1)){
+														echo "<tr><td>".
+														"<select class='form-control form-control-sm courseCode' style='appearance: none' name='courseCode' >";
+														echo '"<option value=\'0\' selected>----------</option>"+';		
+														$query = "select course_id, course_code from course";
+														$result = mysqli_query($con, $query);
+														while($row = mysqli_fetch_assoc($result)){
+															echo	'"<option value=\''.$row["course_id"].'\'';
+															if($row1["course_id"] == $row["course_id"])
+																echo "selected";
+															echo '>'.$row["course_code"].'</option>"+';
+														}			
+														echo "</select></td>".
+														"<td><input type='hidden' name='scId' class='form-control form-control-sm' value='".$row1["sc_id"]."'>".
+														"<input type='text' name='courseName' class='form-control form-control-sm'  value='".$row1["course_name"]."' readonly></td>".
+														"<td>".
+														"<select name='courseGroup' class='form-control form-control-sm courseGroup' style='appearance: none'>".
+														"<option value=\'0\' selected>----------</option>";
+														$query = "select group_id, group_name from course_group";
+														$result = mysqli_query($con, $query);
+														while($row = mysqli_fetch_assoc($result)){
+															echo	'"<option value=\''.$row["group_id"].'\'';
+															if($row1["group_id"] == $row["group_id"])
+																echo "selected";
+															echo '>'.$row["group_name"].'</option>"+';
+														}		
+														echo "</select></td>".												
+				
+														"<td style='text-align: center;'>".
+														"<input type='text' name='courseStatus' class='form-control form-control-sm'  value='".$row1["course_status"]."' readonly></td>".
+														"<td style='text-align: center;background-color: transparent;'><button type='button' class='btn btn-sm courseDelBtn red-icon'>".
+														"<i class='fa fa-trash-alt'></i></button><button class='btn btn-sm courseSaveBtn green-icon'><i class='fas fa-check'></i></button>".
+														"</td></tr>";
+													}
+												?>
+													
+												</tbody>
+												</table>
+											</div>
 										</div>
 										<!-- /.card-body -->
 										
@@ -577,6 +655,11 @@
                 toastr.success('Student information has been updated successfully.');
                 localStorage.clear();
             }
+
+			if(localStorage.getItem("Added")=="1"){
+                toastr.success('Student has been added successfully.');
+                localStorage.clear();
+            }
 			
 			$(document).on('change','.courseCode',function(){
 				valueCurrent = $(this).val();
@@ -608,7 +691,7 @@
 				var tblHeader = "";
 
 				if($("#enrolledCourseHeader").length == 0){
-					var tblHeader = "<tr class='bg-olive' id='enrolledCourseHeader'><td>Code</td><td>Name</td><td>Group</td><td>Start Date</td><td style='text-align: center;width: 100px;'>Status</td><td style='text-align: center;width: 100px;'>Action</td></tr>";
+					var tblHeader = "<tr class='' id='enrolledCourseHeader'><td>Code</td><td>Name</td><td>Group</td><td>Start Date</td><td style='text-align: center;width: 100px;'>Status</td><td style='text-align: center;width: 100px;'>Action</td></tr>";
 				}
 
 				var appendRow = tblHeader+
@@ -628,8 +711,6 @@
 				"<input type='text' name='courseName' class='form-control form-control-sm' readonly></td>"+
 				"<td>"+
 				"<select name='courseGroup' class='form-control form-control-sm courseGroup' style='appearance: none' disabled></select></td>"+
-				"<td>"+
-				"<input type='text' name='courseStartDate' class='form-control form-control-sm' readonly></td>"+
 				"<td style='text-align: center;width: 100px;'>"+
 				"<input type='text' name='courseStatus' class='form-control form-control-sm' readonly></td>"+
 				"<td style='text-align: center;background-color: transparent;'><button class='btn btn-sm courseDelBtn red-icon'>"+
@@ -718,8 +799,6 @@
 							unset($_SESSION['groupCode']);
 						?>
 						"</select></td>"+
-						"<td>"+
-						"<input type='text' name='courseStartDate' class='form-control form-control-sm' readonly value='"+courseStartDate+"'></td>"+
 						"<td style='text-align: center;width: 100px;'>"+
 						"<input type='text' name='courseStatus' class='form-control form-control-sm' readonly value='"+courseStatus+"'></td>"+
 						"<td style='text-align: center;background-color: transparent;'><button class='btn btn-sm courseDelBtn red-icon'>"+
@@ -774,6 +853,9 @@
 					},
 					studentPasswordRetype: {
                         samePassword: true
+					},
+					studentBatchNumber: {
+						required: true
 					}
 				},
 				messages: {
@@ -794,6 +876,9 @@
 					},
 					studentPasswordRetype: {
                         samePassword: "Retype Password must be same as the Password."
+					},
+					studentBatchNumber: {
+						required: "Please select a batch number"
 					}
 				},
 				errorElement: 'span',

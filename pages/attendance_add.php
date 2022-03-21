@@ -23,7 +23,7 @@ if (isset($_POST["attendanceId"])) {
 	} else {
 
 		$query = "INSERT INTO attendance SET attendance_id = '" . mysqli_real_escape_string($con, $_POST["attendanceId"]) . "', 
-					attendance_date = STR_TO_DATE('" . mysqli_real_escape_string($con, $_POST["attendanceDate"]) . "', '%d/%m/%Y'), 
+					attendance_date = '" . mysqli_real_escape_string($con, $_POST["attendanceDate"]) . "', 
 					attendance_remark = '" . mysqli_real_escape_string($con, $_POST["attendanceDescription"]) . "', 
 					account_id = '" . $_SESSION["itac_user_id"] . "', 
 					batch_id = '" . mysqli_real_escape_string($con, $_POST["attendanceBatchId"]) . "', 
@@ -94,7 +94,7 @@ if (isset($_POST["attendanceId"])) {
 			<section class="content">
 				<form name="add_attendance" id="add_attendance" class="col-lg-12" method="POST">
 					<div class="row">
-						<div class="col-md-4">
+					<div class="col-md-12">
 							<div class="card card-primary">
 								<div class="card-header">
 									<h3 class="card-title">General</h3>
@@ -145,9 +145,9 @@ if (isset($_POST["attendanceId"])) {
 										<div class="row">
 											<div class="form-group col-lg-6">
 												<div class="input-group">
-													<input type="text" name="attendanceDate" id="attendanceDate" class="form-control" data-inputmask-alias="datetime" data-inputmask-inputformat="dd/mm/yyyy" data-mask placeholder="Date" value="<?php echo date('d/m/Y', strtotime("now")) ?>">
+													<input type="date" name="attendanceDate" id="attendanceDate" class="form-control" placeholder="Date" value="<?php echo date('Y-m-d'); ?>">
 													<div class="input-group-prepend">
-														<span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+														<!-- <span class="input-group-text"><i class="far fa-calendar-alt"></i></span> -->
 													</div>
 												</div>
 											</div>
@@ -170,13 +170,11 @@ if (isset($_POST["attendanceId"])) {
 								<!-- /.card-body -->
 							</div>
 							<!-- /.card -->
-						</div>
-						<div class="col-md-8">
-							
+						</div>						
+						<div class="col-md-12">							
 							<div class="card card-secondary">
 								<div class="card-header">
-									<h3 class="card-title">Attendance Information</h3>
-
+									<h3 class="card-title">Information</h3>
 									<div class="card-tools">
 										<button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
 											<i class="fas fa-minus"></i>
@@ -185,25 +183,23 @@ if (isset($_POST["attendanceId"])) {
 								</div>
 								<div class="card-body">
 									<div class="row">
-										<div class="col-12">
-											<div class="card">
-											<div class="card-header bg-success">
-												Enrolled Student Information
-											</div>
-											<!-- ./card-header -->
-											<div class="card-body p-0">
-												<table id="enrolledStudentTable" class="table table-hover">
-												<tbody>
-													<tr>
-														<td style='padding:10px;' colspan="3"><button type="button" class="btn btn-sm" style="background-color:transparent" ><i class="fas fa-plus"></i> No student list was generated</button></td>
-													</tr>
-													
-												</tbody>
-												</table>
-											</div>
-											<!-- /.card-body -->
-											</div>
-											<!-- /.card -->
+										<div class="col-12">											
+											<div class="card attendanceForm">
+												<div class="card-header bg-success">
+													Student List
+												</div>												
+												<div class="card-body p-0">		
+													<div style='overflow:auto; width:100%;position:relative;'>									
+														<table class="table table-hover enrolledStudentTable">
+															<tbody>
+																<tr>
+																	<td style='padding:10px;' colspan="3"><button type="button" class="btn btn-sm" style="background-color:transparent" ><i class="fas fa-plus"></i> No student list was generated</button></td>
+																</tr>															
+															</tbody>
+														</table>
+													</div>
+												</div>
+											</div>				
 										</div>
 										<div class="col-12">
 											<div class="form-group">
@@ -222,9 +218,7 @@ if (isset($_POST["attendanceId"])) {
 											</div>
 										</div>
 									</div>
-									<!-- /.card-body -->
 								</div>
-								<!-- /.card -->
 							</div>
 						</div>
 					</div>
@@ -312,9 +306,18 @@ if (isset($_POST["attendanceId"])) {
 					console.log(xhr.responseText);
 					data = JSON.parse(xhr.responseText);
 
-					var tbl = $("#enrolledStudentTable");
+					var tbl = $(".enrolledStudentTable:last");
 					var tblHeader = "";
 					var appendRow = "";
+
+					if($(".attendanceForm:last").find(".attendanceGroupId").val() != undefined && $(".attendanceForm:last").find(".attendanceGroupId").val() != courseGroupId){ 
+						$(".attendanceForm:last").clone().insertAfter(".attendanceForm:last");
+						$(".attendanceForm:last .card-header").html("Student List: "+$("#attendanceCourseGroup option:selected").text());
+						$(".enrolledStudentTable:last").find('tr').remove();
+					} else {
+						$(".attendanceForm:last .card-header").html("Student List: "+$("#attendanceCourseGroup option:selected").text());
+						$(".enrolledStudentTable:last").find('tr').remove();
+					}
 
 					if($("#enrolledCourseHeader").length == 0){
 						tblHeader = "<tr id='enrolledCourseHeader'><td style='width:20px; text-align:center;'>No.</td><td>Student Name</td>"+
@@ -326,33 +329,34 @@ if (isset($_POST["attendanceId"])) {
 					for (var i = 0, len = data.length; i < len; i++) {
 						var id = data[i].studentId;
 						var desc = data[i].studentName;
-						appendRow += "<tr><td style='width:20px; text-align:center;'>"+(i+1)+"<input type='hidden' name='studentId' class='form-control form-control-sm studentId' value='"+id+"'></div></td>";
+						appendRow += "<tr><td style='width:20px; text-align:center;'>"+(i+1)+"<input type='hidden' name='studentId' class='form-control form-control-sm studentId' value='"+id+"'><input type='hidden' class='attendanceGroupId' name='attendanceGroupId' value='"+courseGroupId+"'></div></td>";
 						appendRow += "<td><div class='col-sm-6'>"+desc+"</div></td>";
 						appendRow += "<td style='width:100px; text-align:center;'>";
-						appendRow += "<div data-toggle='buttons'><label class='btn'>";
+						appendRow += "<div data-toggle='buttons' class='btn'><label class=''>";
 						appendRow += "<input type='radio' class='studentAttendance' name='options' style='display:none;' value='Present'> <i class='fas fa-check'></i></label></div></td>";
-						appendRow += "<td style='width:100px; text-align:center;'><div data-toggle='buttons'><label class='btn'>";
+						appendRow += "<td style='width:100px; text-align:center;'><div data-toggle='buttons' class='btn'><label class=''>";
 						appendRow += "<input type='radio' class='studentAttendance' name='options' style='display:none;' value='Late'> <i class='fas fa-check'></i></label></div></td>";
-						appendRow += "<td style='width:100px; text-align:center;'><div data-toggle='buttons'><label class='btn'>";
+						appendRow += "<td style='width:100px; text-align:center;'><div data-toggle='buttons' class='btn'><label class=''>";
 						appendRow += "<input type='radio' class='studentAttendance' name='options' style='display:none;' value='MC / Leave'> <i class='fas fa-check'></i></label></div></td>";
-						appendRow += "<td style='width:100px; text-align:center;'><div data-toggle='buttons'><label class='btn'>";
-						appendRow += "<input type='radio' class='studentAttendance' name='options' style='display:none;' value='Absent'> <i class='fas fa-check'></i></label></div></td>";
+						appendRow += "<td style='width:100px; text-align:center;'><div data-toggle='buttons' class='btn'><label class='green-icon'>";
+						appendRow += "<input type='radio' class='studentAttendance' name='options' style='display:none;' value='Absent' checked> <i class='fas fa-check'></i></label></div></td>";
                 		//appendRow += "</div></td>";
 						appendRow += "</tr>";
 					}
-					tbl.find("tr").remove();
-					$(appendRow).appendTo(tbl);
+					//tbl.find("tr").remove();
+					$(appendRow).appendTo(".enrolledStudentTable:last");
 				}
 			});
 		}
 
-		function setStudentAttendanceInfo(attendanceId, studentId, valueCurrent){	
+		function setStudentAttendanceInfo(attendanceId, studentId, groupId, valueCurrent){	
 			jQuery.ajax({
 				type: "POST",
 				url: "../pages/includes/set_student_attendance.php",
 				data: {
 					studentId: studentId,
 					valueCurrent: valueCurrent,
+					groupId: groupId,
 					attendanceId: attendanceId
 				}
 			}).done(function(response){
@@ -377,13 +381,15 @@ if (isset($_POST["attendanceId"])) {
 				var valueCurrent = $(this).val();
 				var studentId = $(this).closest("tr").find("input[name='studentId']").val();
 				var attendanceId = $("#attendanceId").val();
+				var groupdId = $(this).closest("tr").find("input[name='attendanceGroupId']").val();
+
 				$(this).closest("tr").find("label").removeClass("green-icon");
 				$(this).closest("label").addClass("green-icon");
 
-				setStudentAttendanceInfo(attendanceId, studentId, valueCurrent);
+				setStudentAttendanceInfo(attendanceId, studentId, groupdId, valueCurrent);
 			});
 
-			$("#add_attendance").submit(function(){
+			$("#add_attendance").submit(function(){ 
 				if($(this).valid()) {
 					$("#attendanceBatchId").prop('disabled', false);
 					$("#attendanceCourseId").prop('disabled', false);
@@ -392,7 +398,7 @@ if (isset($_POST["attendanceId"])) {
 			});
 
 			$("#generateStudentList").click(function(){
-				var tbl = $("#enrolledStudentTable");
+				//var tbl = $("#enrolledStudentTable");
 				var batchId = $("#attendanceBatchId").val();
 				var courseId = $("#attendanceCourseId").val();
 				var courseGroupId = $("#attendanceCourseGroup").val();
@@ -403,8 +409,8 @@ if (isset($_POST["attendanceId"])) {
 				
 				$("#attendanceBatchId").prop('disabled', true);
 				$("#attendanceCourseId").prop('disabled', true);
-				$("#attendanceCourseGroup").prop('disabled', true);
-				$("#generateStudentList").prop('disabled', true);
+				$("#attendanceCourseGroup").prop('disabled', false);
+				$("#generateStudentList").prop('disabled', false);
 
 				getEnrolledStudentInfo(batchId, courseId, courseGroupId);
 			});
@@ -426,7 +432,6 @@ if (isset($_POST["attendanceId"])) {
 				var moduleName = $(this).closest("tr").find("input[name='moduleName']").val();
 				var attendanceId = $("#attendanceId").val();
 				var moduleId = $(this).attr('data-moduleId');
-				
 
 				if(moduleId != undefined){
 					var flag = "update";

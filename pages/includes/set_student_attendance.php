@@ -20,6 +20,7 @@ if(mysqli_num_rows($result) > 0){
     $query = "INSERT INTO attendance_sub SET 
             attendance_sub_status = '" . mysqli_real_escape_string($con, $_POST["valueCurrent"]) . "', 
             attendance_id = '" . mysqli_real_escape_string($con, $_POST["attendanceId"]) . "', 
+            group_id = '" . mysqli_real_escape_string($con, $_POST["groupId"]) . "', 
             account_id = '" . mysqli_real_escape_string($con, $_POST["studentId"]) . "'";
 
     echo "Add Attendance";

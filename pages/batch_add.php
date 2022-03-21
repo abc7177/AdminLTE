@@ -313,22 +313,31 @@ if (isset($_POST["batchCode"])) {
 						var tblHeader = "";
 						var appendRow = "";
 
-						if($("#enrolledCourseHeader").length == 0){
-							tblHeader = "<tr id='enrolledCourseHeader'><td style='width:20px; text-align:center;'>No.</td><td style='width:150px;'>Student Name</td>"+
-							"<td style='width:50px;'>Enroll Date</td><td style='width:50px; text-align:center;'>&nbsp;</td>";
-						}
+					
+						
+						if(data.length > 0){
+							if($("#enrolledCourseHeader").length == 0){
+								tblHeader = "<tr id='enrolledCourseHeader'><td style='width:20px; text-align:center;'>No.</td><td style='width:150px;'>Student Name</td>"+
+								"<td style='width:50px;'>Enroll Date</td><td style='width:50px; text-align:center;'>&nbsp;</td>";
+							}
 
-						appendRow += tblHeader;
-						for (var i = 0, len = data.length; i < len; i++) {
-							var id = data[i].studentId;
-							var desc = data[i].studentName;
-							var enrollDate = data[i].studentEnrollDate;
-							appendRow += "<tr><td style='width:20px; text-align:center;'>"+(i+1)+"<input type='hidden' name='studentId' class='form-control form-control-sm studentId' value='"+id+"'></div></td>";
-							appendRow += "<td><div>"+desc+"</div></td>";
-							appendRow += "<td><div>"+enrollDate+"</div></td>";
-							appendRow += "<td style='text-align: center;'>";
-							appendRow += "<div data-toggle='buttons'><label class='btn'>";
-							appendRow += "<input type='radio' class='studentBatch' name='options' style='display:none;' value='Enroll'> <i class='fas fa-check'></i></label></div></td>";			
+							appendRow += tblHeader;
+							
+							for (var i = 0, len = data.length; i < len; i++) {
+								var id = data[i].studentId;
+								var desc = data[i].studentName;
+								var enrollDate = data[i].studentEnrollDate;
+								appendRow += "<tr><td style='width:20px; text-align:center;'>"+(i+1)+"<input type='hidden' name='studentId' class='form-control form-control-sm studentId' value='"+id+"'></div></td>";
+								appendRow += "<td><div>"+desc+"</div></td>";
+								appendRow += "<td><div>"+enrollDate+"</div></td>";
+								appendRow += "<td style='text-align: center;'>";
+								appendRow += "<div data-toggle='buttons'><label class='btn'>";
+								appendRow += "<input type='radio' class='studentBatch' name='options' style='display:none;' value='Enroll'> <i class='fas fa-check'></i></label></div></td>";			
+								appendRow += "</tr>";
+							}
+						} else {
+							appendRow += "<tr>";
+							appendRow += '<td style="padding:10px;" colspan="3"><button type="button" class="btn btn-sm" style="background-color:transparent" ><i class="fas fa-plus"></i> No available students to assign</button></td>';
 							appendRow += "</tr>";
 						}
 						tbl.find("tr").remove();

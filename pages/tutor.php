@@ -111,7 +111,7 @@
                                             while($row = mysqli_fetch_assoc($result)){
                                                 echo '<tr>';
                                                     echo '<td>'.$counter.'</td>';
-                                                    echo '<td>'.$row["account_name"].'</td>';
+                                                    echo '<td> <button class="btn btn-sm loginAsTutorBtn red-icon" data-account_id="'.$row["account_id"].'"><i class="fa fa-user" aria-hidden="true"></i></button>'.$row["account_name"].'</td>';
                                                     echo '<td>'.$row["account_username"].'</td>';
                                                     echo '<td>'.$row["account_enroll_date"].'</td>';
                                                     
@@ -122,8 +122,8 @@
                                                         echo $row["account_status"];
                                                     echo '</td>';                                                   
                                                     echo '<td style="text-align: center;">';
-                                                        echo '<button type="button" id="deleteTutor" style="margin:1px 3px;" class="btn btn-md btn-danger" data-account_id="'.$row["account_id"].'"><i class="fa fa-trash-alt"></i></button>';
-                                                        echo '<button type="button" id="editTutor" style="margin:1px 3px;" class="btn btn-md btn-info" data-account_id="'.$row["account_id"].'"><i class="fa fa-edit"></i></button>';
+                                                        echo '<button type="button" style="margin:1px 3px;" class="btn btn-md btn-danger deleteTutor" data-account_id="'.$row["account_id"].'"><i class="fa fa-trash-alt"></i></button>';
+                                                        echo '<button type="button" style="margin:1px 3px;" class="btn btn-md btn-info editTutor" data-account_id="'.$row["account_id"].'"><i class="fa fa-edit"></i></button>';
                                                     echo '</td>';
                                                 echo '</tr>';
                                                 $counter++;
@@ -170,11 +170,28 @@
                     </div>
                 </form>
             </div>
-            <!-- /.modal-content -->
         </div>
-        <!-- /.modal-dialog -->
     </div>
-      <!-- /.modal -->
+
+    <div class="modal fade" id="loginAsTutorModal">
+        <div class="modal-dialog modal-sm">
+            <div class="modal-content">
+                <div class="modal-header bg-info">
+                    <h6 class="modal-title">Login as this tutor?</h6>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form name="delete_form" method="POST" enctype="multipart/form-data" >
+                    <input type="hidden" name="tutor_account_id" id="tutor_account_id">
+                    <div class="modal-footer justify-content-center">
+                        <button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-outline-info" onclick="login_as_tutor()">Login</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
 	<!-- jQuery -->
 	<script src="../plugins/jquery/jquery.min.js"></script>
@@ -214,17 +231,22 @@
 		});
         $(function () {
             $("#tutorTable").DataTable({
-            "responsive": true, "lengthChange": false, "autoWidth": false,
+            "responsive": false, 
+            "lengthChange": false, 
+            "autoWidth": false,
+            "initComplete": function (settings, json) {  
+                $("#tutorTable").wrap("<div style='overflow:auto; width:100%;position:relative;'></div>");            
+            },
             "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
             }).buttons().container().appendTo('#tutorTable_wrapper .col-md-6:eq(0)');
 
-            $('[id="deleteTutor"]').click(function() {
+            $("#tutorTable").on("click",".deleteTutor", function () {
 					var account_id = $(this).data('account_id');
                     $("#account_id").val( account_id );
 					$("#deleteModal").modal();
 			});
 
-            $('[id="editTutor"]').click(function() {
+            $("#tutorTable").on("click",".editTutor", function () {
 					var account_id = $(this).data('account_id');
 					var url = "../pages/tutor_edit.php?id="+account_id;
 					window.location.href = url;
@@ -234,12 +256,34 @@
 					var url = "../pages/tutor_add.php";
 					window.location.href = url;
 			});
+
+            $("#tutorTable").on("click",".loginAsTutorBtn", function () {
+                var account_id = $(this).data('account_id');
+                $("#tutor_account_id").val( account_id );
+                $("#loginAsTutorModal").modal();
+			});
             
         });
 
         function delete_tutor(){
                 //alert("Yo");
 				document.forms["delete_form"].submit();	
+		}
+
+        function login_as_tutor(){
+            var account_id =  $("#tutor_account_id").val();            
+
+            jQuery.ajax({
+				type: "POST",
+				url: "../pages/login_as_tutor.php",
+				data: {id: account_id},
+				success: function(data, textStatus, xhr) {
+					console.log(xhr.responseText);
+                    window.open('../index.php?asTutor='+account_id);						
+				}
+			});
+
+            $("#loginAsTutorModal").modal("hide");
 		}
     </script>
 </body>

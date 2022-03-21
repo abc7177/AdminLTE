@@ -75,7 +75,16 @@
 						</div>
 						<div class="col-sm-6">
 							<ol class="breadcrumb float-sm-right">
-								<li class="breadcrumb-item"><a href="../index.php">Home</a></li>
+                                <?php
+                                    if(isset($_GET["asStudent"])){
+                                        echo '<li class="breadcrumb-item"><a href="../index.php?asStudent='.$_GET["asStudent"].'">Home</a></li>';
+                                    } if(isset($_GET["asTutor"])){
+                                        echo '<li class="breadcrumb-item"><a href="../index.php?asTutor='.$_GET["asTutor"].'">Home</a></li>';
+                                    } else {
+                                        echo '<li class="breadcrumb-item"><a href="../index.php">Home</a></li>';
+                                    }
+                                ?>
+								
 								<li class="breadcrumb-item active">Attendance</li>
 							</ol>
 						</div>
@@ -91,7 +100,10 @@
                             <div class="card">
                                 <div class="card-header">
                                     <h3 class="card-title">Datatable of Attendance</h3>
-                                    <h3 class="card-title float-sm-right" ><button type="button" class="btn-sm btn-primary btn-block" id="addNewattendance" ><i class="fa fa-folder-plus"></i>&nbsp;&nbsp;&nbsp;Add New Attendance</button></h3>
+                                    <?php
+                                    if($_SESSION["itac_admin"]  && !isset($_GET["asStudent"])  && !isset($_GET["asTutor"]))
+                                        echo '<h3 class="card-title float-sm-right" ><button type="button" class="btn-sm btn-primary btn-block" id="addNewattendance" ><i class="fa fa-folder-plus"></i>&nbsp;&nbsp;&nbsp;Add New Attendance</button></h3>';
+                                    ?>
                                 </div>
                                 <div class="card-body">
                                     <table id="attendanceTable" class="table table-bordered table-striped">
@@ -102,23 +114,51 @@
                                                 <th>Batch</th>
                                                 <th>Course Info</th>
                                                 <th>Group Name</th>
-                                                <th>Attendance Rate</th>
-                                                <th style="text-align: center;">Action</th>
+                                                <?php
+                                                if($_SESSION["itac_admin"] && !isset($_GET["asStudent"])){
+                                                    echo '<th>Attendance Rate</th>';
+                                                    echo '<th style="text-align: center;">Action</th>';
+                                                } else {
+                                                    echo '<th>Your Attendance</th>';
+                                                }
+                                                ?>
+                                                
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php
                                             $showFilterSelectionDialog = 1;
-                                            $query = "SELECT attendance.*, course.*, course_group.*, batch.batch_code, batch.batch_name FROM attendance 
+                                            
+                                            $query = "SELECT attendance.*, course.*, course_group.*, batch.batch_code, batch.batch_name, GROUP_CONCAT(distinct(course_group.group_name)) as `groupName` ";
+                                            
+                                            if(!$_SESSION["itac_admin"] || isset($_GET["asStudent"])){
+                                                $query .= ', attendance_sub_status ';
+                                            }
+                                            
+                                            $query .= "FROM attendance 
+                                            LEFT JOIN attendance_sub ON attendance_sub.attendance_id = attendance.attendance_id
                                             LEFT JOIN batch ON attendance.batch_id = batch.batch_id 
                                             LEFT JOIN course ON attendance.course_id = course.course_id
-                                            LEFT JOIN course_group ON attendance.group_id = course_group.group_id ";
+                                            LEFT JOIN course_group ON attendance_sub.group_id = course_group.group_id ";
 
-                                            if(isset($_GET["batchNo"]) || isset($_GET["courseCode"]) || isset($_GET["groupNo"])){
+                                            if(!$_SESSION["itac_admin"]){
+                                                //$query .= "LEFT JOIN attendance_sub ON attendance.attendance_id = attendance_sub.attendance_id ";
+                                            }
+
+                                            if(isset($_GET["batchNo"]) || isset($_GET["courseCode"]) || isset($_GET["groupNo"]) || !$_SESSION["itac_admin"]){
                                                 $showFilterSelectionDialog = 0;
                                                 $query .= "WHERE ";
 
+                                                if(!$_SESSION["itac_admin"] || isset($_GET["asStudent"])){
+                                                    if(isset($_GET["asStudent"])){
+                                                        $query .= "attendance_sub.account_id ='".$_SESSION["itac_user_id2"]."' ";
+                                                    } else {
+                                                        $query .= "attendance_sub.account_id ='".$_SESSION["itac_user_id"]."' ";
+                                                    }
+                                                }
+
                                                 if(isset($_GET["batchNo"])){
+                                                    $query .="AND ";
                                                     $query .= "batch.batch_id ='".$_GET["batchNo"]."' ";
                                                 }
 
@@ -134,8 +174,10 @@
                                                     $query .= "course_group.group_id ='".$_GET["groupNo"]."' ";
                                                 }
                                             }
+
+                                            $query .= "group by attendance.attendance_id order by attendance.created desc  ";
                                             
-                                            //echo $query;
+                                            // echo $query;
                                             $result = mysqli_query($con,$query);
                                             $counter = 1;
                                             while($row = mysqli_fetch_assoc($result)){
@@ -146,7 +188,7 @@
                                                     echo '<td>'.$mysqldate.'</td>';
                                                     echo '<td>'.$row["batch_code"].'<br>'.$row["batch_name"].'</td>';
                                                     echo '<td>'.$row["course_code"].'<br>'.$row["course_name"].'</td>';
-                                                    echo '<td>'.$row["group_name"].'</td>';
+                                                    echo '<td>'.$row["groupName"].'</td>';
 
                                                     $query1 = "SELECT FORMAT((
                                                         (SELECT COUNT(*) FROM attendance_sub WHERE attendance_id = '".$row["attendance_id"]."' AND attendance_sub_status = 'Present')
@@ -155,12 +197,19 @@
                                                     ) * 100, 0) AS attendanceRate";
                                                     $result1 = mysqli_query($con,$query1);
                                                     if($row1 = mysqli_fetch_assoc($result1)){
-                                                        echo '<td>'.$row1["attendanceRate"].'%</td>';
+                                                        if($_SESSION["itac_admin"] && !isset($_GET["asStudent"])){
+                                                            echo '<td>'.$row1["attendanceRate"].'%</td>';
+                                                            echo '<td style="text-align: center;">';
+                                                                if(!isset($_GET["asTutor"]))
+                                                                    echo '<button type="button" style="margin:1px 3px;" class="btn btn-md btn-danger deleteattendance" data-attendance_id="'.$row["attendance_id"].'"><i class="fa fa-trash-alt"></i></button>';
+                                                                echo '<button type="button" style="margin:1px 3px;" class="btn btn-md btn-info editattendance" data-attendance_id="'.$row["attendance_id"].'"><i class="fa fa-edit"></i></button>';
+                                                            echo '</td>';
+                                                        } else {
+                                                            echo '<th>'.$row["attendance_sub_status"].'</th>';
+                                                        }
+                                                        
                                                     }
-                                                    echo '<td style="text-align: center;">';
-                                                        echo '<button type="button" id="deleteattendance" style="margin:1px 3px;" class="btn btn-md btn-danger" data-attendance_id="'.$row["attendance_id"].'"><i class="fa fa-trash-alt"></i></button>';
-                                                        echo '<button type="button" id="editattendance" style="margin:1px 3px;" class="btn btn-md btn-info" data-attendance_id="'.$row["attendance_id"].'"><i class="fa fa-edit"></i></button>';
-                                                    echo '</td>';
+                                                   
                                                 echo '</tr>';
                                                 $counter++;
                                             }
@@ -308,7 +357,7 @@
             var showFilterSelectionDialog = $("#showFilterSelectionDialog").val();
 
             if(showFilterSelectionDialog == 1){	// No filter was selected then prompt filter selection modal.
-                $("#filterModal").modal();
+                //$("#filterModal").modal();
             }
 		});
 
@@ -325,19 +374,42 @@
 			});
 
             $("#attendanceTable").DataTable({
-            "responsive": true, "lengthChange": false, "autoWidth": false,
-            "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+                "responsive": false, 
+                "lengthChange": false, 
+                "autoWidth": false,
+                "initComplete": function (settings, json) {  
+                    $("#attendanceTable").wrap("<div style='overflow:auto; width:100%;position:relative;'></div>");            
+                },
+                "buttons": [
+                    "copy", "csv", "excel", "pdf", "print", "colvis",
+                    {
+                        text: '<i class="fa fa-filter" /> Filter</i>',
+                        action: function ( e, dt, node, config ) {
+                            $("#filterModal").modal();
+                        }
+                    }
+                ]
             }).buttons().container().appendTo('#attendanceTable_wrapper .col-md-6:eq(0)');
 
-            $('[id="deleteattendance"]').click(function() {
+            $("#attendanceTable").on("click",".deleteattendance", function () {
 					var attendance_id = $(this).data('attendance_id');
                     $("#attendance_id").val( attendance_id );
 					$("#deleteModal").modal();
 			});
 
-            $('[id="editattendance"]').click(function() {
+            $("#attendanceTable").on("click",".editattendance", function () {
 					var attendance_id = $(this).data('attendance_id');
-					var url = "../pages/attendance_edit.php?id="+attendance_id;
+                    var currentUrl = window.location.href;
+                    var url = new URL(currentUrl);
+					
+
+                    if(url.searchParams.has("asTutor") == true){
+                        var asTutor = url.searchParams.get("asTutor");
+                        url = "../pages/attendance_edit.php?asTutor="+asTutor+"&id="+attendance_id;
+                    } else {
+                        url = "../pages/attendance_edit.php?id="+attendance_id;
+                    }                                      					
+
 					window.location.href = url;
 			});
 

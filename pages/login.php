@@ -21,12 +21,25 @@
           echo "<script>window.location='login.php'</script>";	
         }
         else{
+
+          if(isset($_POST["rememberMe"])) { 
+            setcookie ("member_username",$_POST["username"],time()+ (10 * 365 * 24 * 60 * 60));
+            setcookie ("member_password",$_POST["password"],time()+ (10 * 365 * 24 * 60 * 60));
+          } else { 
+            if(isset($_COOKIE["member_username"])) {
+              setcookie ("member_username","");
+              setcookie ("member_password","");
+            }
+          }
+
           $_SESSION["itac_user_id"] = $row["account_id"];	
           //$_SESSION["itac_path_configuration"] = "/demo/howard/itac";
           $_SESSION["itac_path_configuration"] = "/xantec/itac";
+          //$_SESSION["itac_path_configuration"] = "";
           $_SESSION["itac_ad_image_path"] = $row["ad_image_path"];
           $_SESSION["itac_account_level"] = $row["account_level_class"];
           $_SESSION["itac_username"] = $row["account_username"];
+          $_SESSION["itac_account_name"] = $row["account_name"];
           $_SESSION["itac_user_permission_array"] = explode(",",$row["account_permission"]);	
           if($_SESSION["itac_account_level"] <= 1){
             $_SESSION["itac_admin"] = "1";	// admin account, to enable admin only functions
@@ -83,7 +96,7 @@
 
         <form method="post">
           <div class="input-group mb-3">
-            <input type="text" name="username" class="form-control" placeholder="Username">
+            <input type="text" name="username" class="form-control" placeholder="Username" value="<?php if(isset($_COOKIE["member_username"])) { echo $_COOKIE["member_username"]; } ?>">
             <div class="input-group-append">
               <div class="input-group-text">
                 <span class="fas fa-user"></span>
@@ -91,7 +104,7 @@
             </div>
           </div>
           <div class="input-group mb-3">
-            <input type="password" name="password" class="form-control" placeholder="Password">
+            <input type="password" name="password" class="form-control" placeholder="Password" value="<?php if(isset($_COOKIE["member_password"])) { echo $_COOKIE["member_password"]; } ?>">
             <div class="input-group-append">
               <div class="input-group-text">
                 <span class="fas fa-lock"></span>
@@ -101,8 +114,8 @@
           <div class="row">
             <div class="col-8">
               <div class="icheck-primary">
-                <input type="checkbox" id="remember">
-                <label for="remember">
+                <input type="checkbox" name="rememberMe" id="rememberMe" value="1" <?php if(isset($_COOKIE["member_username"])) { echo "checked"; } ?>>
+                <label for="rememberMe">
                   Remember Me
                 </label>
               </div>

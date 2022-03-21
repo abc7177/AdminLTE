@@ -129,8 +129,8 @@
                                                         echo $row["batch_status"];
                                                     echo '</td>';
                                                     echo '<td style="text-align: center;">';
-                                                        echo '<button type="button" id="deleteBatch" style="margin:1px 3px;" class="btn btn-md btn-danger" data-batch_id="'.$row["batch_id"].'"><i class="fa fa-trash-alt"></i></button>';
-                                                        echo '<button type="button" id="editBatch" style="margin:1px 3px;" class="btn btn-md btn-info" data-batch_id="'.$row["batch_id"].'"><i class="fa fa-edit"></i></button>';
+                                                        echo '<button type="button" style="margin:1px 3px;" class="btn btn-md btn-danger deleteBatch" data-batch_id="'.$row["batch_id"].'"><i class="fa fa-trash-alt"></i></button>';
+                                                        echo '<button type="button" style="margin:1px 3px;" class="btn btn-md btn-info editBatch" data-batch_id="'.$row["batch_id"].'"><i class="fa fa-edit"></i></button>';
                                                     echo '</td>';
                                                 echo '</tr>';
                                                 $counter++;
@@ -222,17 +222,22 @@
 
         $(function () {
             $("#BatchTable").DataTable({
-            "responsive": true, "lengthChange": false, "autoWidth": false,
+            "responsive": false, 
+            "lengthChange": false, 
+            "autoWidth": false,
+            "initComplete": function (settings, json) {  
+                $("#BatchTable").wrap("<div style='overflow:auto; width:100%;position:relative;'></div>");            
+            },
             "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
             }).buttons().container().appendTo('#BatchTable_wrapper .col-md-6:eq(0)');
 
-            $('[id="deleteBatch"]').click(function() {
+            $("#BatchTable").on("click",".deleteBatch", function () {
 					var batch_id = $(this).data('batch_id');
                     $("#batch_id").val( batch_id );
 					$("#deleteModal").modal();
 			});
 
-            $('[id="editBatch"]').click(function() {
+            $("#BatchTable").on("click",".editBatch", function () {
 					var batch_id = $(this).data('batch_id');
 					var url = "../pages/batch_edit.php?id="+batch_id;
 					window.location.href = url;

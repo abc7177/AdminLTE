@@ -6,12 +6,17 @@ if($_POST["evaType"] == "daily") {
                 eva_rate = '" . mysqli_real_escape_string($con, $_POST["evaRate"]) . "', 
                 eva_comment = '" . mysqli_real_escape_string($con, $_POST["evaComment"]) . "' 
                 WHERE eva_sub_id = '" . mysqli_real_escape_string($con, $_POST["id"]) . "'";
-} else {
+} else if($_POST["evaType"] == "semester"){
     $query = "UPDATE evaluation_sem_sub SET
+            eva_rate = '" . mysqli_real_escape_string($con, $_POST["evaRate"]) . "', 
+            eva_comment = '" . mysqli_real_escape_string($con, $_POST["evaComment"]) . "' 
+            WHERE eva_sub_id = '" . mysqli_real_escape_string($con, $_POST["id"]) . "'";
+} else {
+    $query = "UPDATE evaluation_final_sub SET
             eva_rate = '" . mysqli_real_escape_string($con, $_POST["evaRate"]) . "', 
             eva_comment = '" . mysqli_real_escape_string($con, $_POST["evaComment"]) . "' 
             WHERE eva_sub_id = '" . mysqli_real_escape_string($con, $_POST["id"]) . "'";
 }
 $result = mysqli_query($con, $query);
-echo $query;
+//echo $query;
 ?>

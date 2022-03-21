@@ -35,8 +35,10 @@ if (isset($_POST["evaluationId"])) {
 				group_id = '" . mysqli_real_escape_string($con, $_POST["evaluationCourseGroup"]) . "'";
 	$result = mysqli_query($con, $query);
 
-	echo '<script>localStorage.setItem("Added",1)</script>';	// Successful added flag.
-	echo "<script>window.location='evaluation.php?eva_type=".$evaType."'</script>";
+	$evaId = mysqli_real_escape_string($con, $_POST["evaluationId"]);
+
+	//echo '<script>localStorage.setItem("Added",1)</script>';	// Successful added flag.
+	echo "<script>window.location='evaluation_edit.php?id=".$evaId."&eva_type=".$evaType."'</script>";
 	
 	exit;
 }
@@ -222,14 +224,15 @@ if (isset($_POST["evaluationId"])) {
 											</div>
 											<!-- ./card-header -->
 											<div class="card-body p-0">
-												<table id="enrolledStudentTable" class="table table-hover">
-												<tbody>
-													<tr>
-														<td style='padding:10px;' colspan="3"><button type="button" class="btn btn-sm" style="background-color:transparent" ><i class="fas fa-plus"></i> No student list was generated</button></td>
-													</tr>
-													
-												</tbody>
-												</table>
+												<div style='overflow:auto; width:100%;position:relative;'>
+													<table id="enrolledStudentTable" class="table table-hover">
+														<tbody>
+															<tr>
+																<td style='padding:10px;' colspan="3"><button type="button" class="btn btn-sm" style="background-color:transparent" ><i class="fas fa-plus"></i> No student list was generated</button></td>
+															</tr>															
+														</tbody>
+													</table>
+												</div>
 											</div>
 											<!-- /.card-body -->
 											</div>
@@ -240,7 +243,7 @@ if (isset($_POST["evaluationId"])) {
 												<div class="row">
 													<div class="form-group col-lg-12">
 														<div class="input-group">
-															<button type="button" id="generateEvaluationForm" class="btn btn-primary btn-block">Generate Daily Evaluation Form <i class="fa fa-check"></i></button>
+															<button type="button" id="generateEvaluationForm" class="btn btn-primary btn-block" disabled>Generate Daily Evaluation Form <i class="fa fa-check"></i></button>
 														</div>
 													</div>
 												</div>
@@ -271,15 +274,17 @@ if (isset($_POST["evaluationId"])) {
 													Daily Evaluation Form
 												</div>
 												<div class="card-body p-0">
-													<table id="evaluationFormTable" class="table table-hover">
-														<tbody>
-															<tr>
-																<td style='padding:10px;' colspan="3"><button type="button" class="btn btn-sm" style="background-color:transparent" ><i class="fas fa-plus"></i> No evaluation form was generated</button></td>
-															</tr>
-														</tbody>
-													</table>
+													<div style='overflow:auto; width:100%;position:relative;'>
+														<table class="table table-hover evaluationFormTable" style="table-layout: fixed; width: 100%;">
+															<tbody>
+																<tr>
+																	<td style='padding:10px;' colspan="3"><button type="button" class="btn btn-sm" style="background-color:transparent" ><i class="fas fa-plus"></i> No evaluation form was generated</button></td>
+																</tr>
+															</tbody>
+														</table>
+													</div>
 												</div>
-											</div>											
+											</div>																						
 										</div>
 										<div class="col-12">
 											<div class="form-group">
@@ -291,7 +296,7 @@ if (isset($_POST["evaluationId"])) {
 													</div>
 													<div class="form-group col-lg-6">
 														<div class="input-group">
-															<button type="button" id="saveEvaluationForm" class="btn btn-primary btn-block" data-evatype='<?php echo $evaType;?>'>Save Evaluation Form <i class="fa fa-save"></i></button>
+															<button type="button" id="saveEvaluationForm" class="btn btn-primary btn-block" data-evatype='<?php echo $evaType;?>'>Start Evaluation <i class="fa fa-arrow-right"></i></button>
 														</div>
 													</div>
 												</div>
@@ -323,7 +328,7 @@ if (isset($_POST["evaluationId"])) {
 					<div class="modal-body">
 						<input type="hidden" name="cmcId" id="cmcId">
 						<input type="hidden" name="studentId" id="studentId">
-						<textarea name="evaComment" id="evaComment"></textarea>
+						<textarea name="evaComment" id="evaComment" style="min-width: 100%"></textarea>
 					</div>
 					<div class="modal-footer justify-content-center">
 						<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
@@ -446,27 +451,30 @@ if (isset($_POST["evaluationId"])) {
 					var tblHeader = "";
 					var appendRow = "";
 
+					tbl.find("tr").remove();
+
 					if($("#enrolledCourseHeader").length == 0){
-						tblHeader = "<tr id='enrolledCourseHeader'><td style='width:20px; text-align:center;'>No.</td><td>Student Name</td>"+
-						"<td style='width:100px; text-align:center;'>Hands On</td>"+
-						"<td style='width:100px; text-align:center;'>Model</td></tr>";
+						tblHeader = "<tr id='enrolledCourseHeader'><td style='width:80px; text-align:center;'>No.</td><td style='width:150px;'>Student Name</td>"+
+						"<td style='width:80px; text-align:center;'>Hands On</td>"+
+						"<td style='width:80px; text-align:center;'>Model</td></tr>";
 					}
 
 					appendRow += tblHeader;
 					for (var i = 0, len = data.length; i < len; i++) {
 						var id = data[i].studentId;
 						var desc = data[i].studentName;
-						appendRow += "<tr><td style='width:20px; text-align:center;'>"+(i+1)+"<input type='hidden' name='studentId' class='form-control form-control-sm studentId' value='"+id+"'></div></td>";
-						appendRow += "<td><div class='col-sm-6'>"+desc+"</div></td>";
-						appendRow += "<td style='width:100px; text-align:center;'>";
-						appendRow += "<div data-toggle='buttons'><label class='btn'>";
-						appendRow += "<input type='radio' class='studentEvaluation' name='options_"+i+"' style='display:none;' value='Hands On'> <i class='fas fa-check'></i></label></div></td>";
-						appendRow += "<td style='width:100px; text-align:center;'><div data-toggle='buttons'><label class='btn'>";
-						appendRow += "<input type='radio' class='studentEvaluation' name='options_"+i+"' style='display:none;' value='Modal'> <i class='fas fa-check'></i></label></div></td>";
+						appendRow += "<tr><td style='text-align:center;'>"+(i+1)+"<input type='hidden' name='studentId' class='form-control form-control-sm studentId' value='"+id+"'></div></td>";
+						appendRow += "<td>"+desc+"</td>";
+						appendRow += "<td style= 'text-align:center;'>";
+						appendRow += "<div data-toggle='buttons' class='btn'><label>";
+						appendRow += "<input type='radio' class='studentEvaluation' name='options_"+i+"'  value='Hands On'> <i class='fas fa-check'></i></label></div></td>";
+						appendRow += "<td style='text-align:center;'><div data-toggle='buttons' class='btn'><label>";
+						appendRow += "<input type='radio' class='studentEvaluation' name='options_"+i+"'  value='Modal'> <i class='fas fa-check'></i></label></div></td>";
                 		//appendRow += "</div></td>";
 						appendRow += "</tr>";
 					}
-					tbl.find("tr").remove();
+
+					//tbl.find("tr").remove();
 					$(appendRow).appendTo(tbl);
 				}
 			});
@@ -476,11 +484,16 @@ if (isset($_POST["evaluationId"])) {
 
 			var courseModuleCriteria;
 			var studentInfo;
+			var courseGroupId = $("#evaluationCourseGroup").val();
+			var evaluationSessionType = $("input[name=evaluationSessionType]:checked").val();
 
 			jQuery.ajax({
 				type: "POST",
 				url: "../pages/includes/get_course_module_criteria.php",
-				data: {id: $("#evaluationCourseModule").val()},
+				data: {
+					id: $("#evaluationCourseModule").val(),
+					sessionType: evaluationSessionType
+				},
 				datatype: "json",
 				async: false,
 				success: function(data, textStatus, xhr) {
@@ -489,14 +502,25 @@ if (isset($_POST["evaluationId"])) {
 				}
 			});
 
-			var tbl = $("#evaluationFormTable");
+			var tbl = $(".evaluationFormTable:last");
 			var counter = 0;
-			//$('div.evaForm:last').clone().insertAfter("div.evaForm:last");
-			$(tbl).find('tr').remove();
+			var multipleForm = 0;
+
+			//alert($(".evaForm:last").find(".evaluationGroupId").val());
+	
+			if($(".evaForm:last").find(".evaluationGroupId").val() != undefined && $(".evaForm:last").find(".evaluationGroupId").val() != courseGroupId){	// Attach to the another evaluation form.
+				$(".evaForm:last").clone().insertAfter(".evaForm:last");
+				$(".evaForm:last .card-header").html("Daily Evaluation Form: "+$("#evaluationCourseGroup option:selected").text());
+				$(".evaluationFormTable:last").find('tr').remove();
+				multipleForm = 1;
+			} else {	// Attach form as new.
+				$(".evaForm:last .card-header").html("Daily Evaluation Form: "+$("#evaluationCourseGroup option:selected").text()); 
+				$(".evaluationFormTable:last").find('tr').remove();
+			}
 			
 			$('#enrolledStudentTable tr').each(function () {
 				var studentId = $(this).find('input[name="studentId"]').val();
-				var tblHeader = "";
+				var tblHeader = "";				
 				var appendRow = "";
 
 				if($(this).find('td div input[type="radio"]:checked').val() == 'Hands On'){
@@ -516,34 +540,34 @@ if (isset($_POST["evaluationId"])) {
 							}
 						});
 
-						if($("#evaluationFormHeader").length == 0){
+						if($(".evaluationFormTable:last .evaluationFormHeader").length == 0 || multipleForm == 1){
 							
-							tblHeader = "<tr id='evaluationFormHeader'><td style='width:5px; text-align:center;'>No.</td><td style='width:80px;'>Student Name</td>";
+							tblHeader = "<tr class='evaluationFormHeader'><td style='width:80px; text-align:center;'>No.</td><td style='width:300px;'>Student Name</td>";
 
 							for (var i = 0, len = courseModuleCriteria.length; i < len; i++) {
 								var desc = courseModuleCriteria[i].name;
-								tblHeader += "<td style='width:100px; text-align:center;'>"+desc+"</td>";
+								// tblHeader += "<td style='width:150px; text-align:center;'>"+desc+"</td>";
 								
 							}
 							tblHeader += "</tr>";
 							appendRow += tblHeader;
-							$(appendRow).appendTo(tbl);
+							$(appendRow).appendTo(".evaluationFormTable:last");
 						}
 						
-						appendRow = "<tr><td style='width:5px; text-align:center;'>"+counter+"<input type='hidden' name='studentId' value='"+studentId+"'></td>";
+						appendRow = "<tr><td style=' text-align:center;'>"+counter+"<input type='hidden' name='studentId' value='"+studentId+"'><input type='hidden' class='evaluationGroupId' name='evaluationGroupId' value='"+courseGroupId+"'></td>";
 
 						for (var i = 0, len = studentInfo.length; i < len; i++) {
 							var desc = studentInfo[i].studentName;
-							appendRow += "<td style='width:80px;'>"+desc+"</td>";
+							appendRow += "<td  style='width:300px;'>"+desc+"</td>";
 							for (var i = 0, len = courseModuleCriteria.length; i < len; i++) {
 								appendRow += "<td class='cmcColumn' style='width:100px; text-align:center;'><div><div>"+
-											"<input type='number' name='evaRate' min='0' max='5' step='0.5' value='0'>"+
+											"<input type='hidden' class='evaRate' name='evaRate' min='0' max='100' step='0.5' value='0'>"+
 											"<input type='hidden' name='cmcId' value='"+courseModuleCriteria[i].id+"'><input type='hidden' name='eva_comment"+studentId+"&"+courseModuleCriteria[i].id+"'></div></div>"+
-											"<button type='button' class='btn btn-sm commentBtn' style='background-color:transparent' ><i class='fas fa-plus'></i> Comment</button></td>";
+											"<button type='button' class='btn btn-sm commentBtn' style='background-color:transparent' ></button></td>";
 							}
 						}
 						appendRow += "</tr>";
-						$(appendRow).appendTo(tbl);
+						$(appendRow).appendTo(".evaluationFormTable:last");
 						
 					});
 				}
@@ -552,6 +576,8 @@ if (isset($_POST["evaluationId"])) {
 			$.getScript( "../plugins/rating-stars.js", function() {
 				console.log( "Successfully Loaded." );
 			});
+
+			// $("#saveEvaluationForm").click()
 		}
 		
 		$(function() {
@@ -566,6 +592,10 @@ if (isset($_POST["evaluationId"])) {
 					$(this).parent().parent().find("select[name='evaluationCourseGroup']").val("0");
 					$(this).parent().parent().find("select[name='evaluationCourseGroup']").prop('disabled', true);
 				}
+			});
+
+			$(document).on('change','#evaluationCourseGroup',function(){
+				$('#generateEvaluationForm').prop('disabled', true);
 			});
 
 			$(document).on('change','.studentEvaluation',function(){
@@ -584,13 +614,21 @@ if (isset($_POST["evaluationId"])) {
 					var evaComment = $('input[name="eva_comment'+studentId+'&'+cmcId+'"]').val();
 
 					if(evaComment == ""){
-						$("#evaComment").val( "" );
+						$("#evaComment").val( "" );						
 					} else {
-						$("#evaComment").val( evaComment );
+						$("#evaComment").val( evaComment );						
 					}
 					$("#cmcId").val( cmcId );
 					$("#studentId").val( studentId );				
 					$("#commentModal").modal();
+			});
+
+			$(document).on('change','.evaRate',function(){
+				if(this.value>100){
+					this.value='100';
+				}else if(this.value<0){
+					this.value='0';
+				}
 			});
 
 			$("#add_evaluation").submit(function(){
@@ -605,15 +643,28 @@ if (isset($_POST["evaluationId"])) {
 			$(".commentModalSave").click(function() {
 				var evaComment = $("#evaComment").val();
 				$('input[name="eva_comment'+$("#studentId").val()+'&'+$("#cmcId").val()+'"]').val( evaComment );
+
+				if(evaComment != "")
+					$('input[name="eva_comment'+$("#studentId").val()+'&'+$("#cmcId").val()+'"]').parent().parent().parent().find(".fa-plus-circle").css("color","red");
+				else 
+					$('input[name="eva_comment'+$("#studentId").val()+'&'+$("#cmcId").val()+'"]').parent().parent().parent().find(".fa-plus-circle").css("color","");
+
 				$("#commentModal").modal('hide');
 			});
 
-			$("#saveEvaluationForm").click(function(){
+			$("#saveEvaluationForm").click(function(){ 
+				$(this).prop('disabled', true);
 				var evaType = $(this).data("evatype");
+				var count = $('.evaluationFormTable tr').length;
 
-				$('#evaluationFormTable tr').each(function () {
+				$('.evaluationFormTable tr').each(function (i) {
 					var studentId = $(this).find('input[name="studentId"]').val();
+					var groupId =  $(this).find('input[name^="evaluationGroupId"]').val();
 
+					if (i+1 === count) {
+						
+					}
+			
 					if(studentId == undefined){
 						return true;	// Skip those empty rows.
 					}
@@ -621,25 +672,27 @@ if (isset($_POST["evaluationId"])) {
 					$(this).find('td.cmcColumn').each (function() {
 						var cmcId = $(this).find('input[name="cmcId"]').val();
 						var evaRate = $(this).find('input[name="evaRate"]').val();
-						var evaComment = $(this).find('input[name^="eva_comment"]').val()
+						var evaComment = $(this).find('input[name^="eva_comment"]').val();
 
 						jQuery.ajax({
 							type: "POST",
 							url: "../pages/includes/add_evaluation_sub.php",
+							async: false,
 							data: {
 								id: $("#evaluationId").val(),
 								studentId: studentId,
 								evaType: evaType,
 								cmcId: cmcId,
 								evaRate: evaRate,
+								groupId: groupId,
 								evaComment: evaComment
 							},
 							success: function(data, textStatus, xhr) {
 							}
 						});
-					});
+					});					
 				});
-				$("#add_evaluation").submit();
+				$("#add_evaluation").submit(); 
 			});
 
 
@@ -654,8 +707,9 @@ if (isset($_POST["evaluationId"])) {
 				
 				$("#evaluationBatchId").prop('disabled', true);
 				$("#evaluationCourseId").prop('disabled', true);
-				$("#evaluationCourseGroup").prop('disabled', true);
-				$("#generateStudentList").prop('disabled', true);
+				$("#evaluationCourseGroup").prop('disabled', false);
+				$("#generateStudentList").prop('disabled', false);
+				$("#generateEvaluationForm").prop('disabled', false);
 				$("#evaluationSessionId").prop('disabled', true);
 
 				getEnrolledStudentInfo(batchId, courseId, courseGroupId);

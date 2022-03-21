@@ -3,9 +3,12 @@
     if($_GET["eva_type"] == "daily"){
         $evaType = "daily";
         $page = "Daily Evaluation";
-    } else {
+    } else if($_GET["eva_type"] == "semester") {
         $evaType = "semester";
         $page = "Semester Evaluation";
+    } else {
+        $evaType = "final";
+        $page = "Final Evaluation";
     }
     
 
@@ -27,11 +30,17 @@
 
             $q = "DELETE FROM evaluation_sub WHERE evaluation_id = '".mysqli_real_escape_string($con,$_POST["evaluation_id"])."'";
             mysqli_query($con,$q);
-        } else {
+        } else if($evaType == "semester") {
             $q = "DELETE FROM evaluation_sem WHERE evaluation_id = '".mysqli_real_escape_string($con,$_POST["evaluation_id"])."'";
             mysqli_query($con,$q);
 
             $q = "DELETE FROM evaluation_sem_sub WHERE evaluation_id = '".mysqli_real_escape_string($con,$_POST["evaluation_id"])."'";
+            mysqli_query($con,$q);
+        } else {
+            $q = "DELETE FROM evaluation_final WHERE evaluation_id = '".mysqli_real_escape_string($con,$_POST["evaluation_id"])."'";
+            mysqli_query($con,$q);
+
+            $q = "DELETE FROM evaluation_final_sub WHERE evaluation_id = '".mysqli_real_escape_string($con,$_POST["evaluation_id"])."'";
             mysqli_query($con,$q);
         }
 
@@ -87,12 +96,19 @@
 				<div class="container-fluid">
 					<div class="row mb-2">
 						<div class="col-sm-6">
-							<h1><?php if($page == "Daily Evaluation"){ echo "Daily Evaluation"; } else { echo "Semester Evaluation"; } ?></h1>
+							<h1><?php if($page == "Daily Evaluation"){ echo "Daily Evaluation"; } else if($evaType == "semester"){ echo "Semester Evaluation"; } else {echo "Final Evaluation";} ?></h1>
 						</div>
 						<div class="col-sm-6">
 							<ol class="breadcrumb float-sm-right">
-								<li class="breadcrumb-item"><a href="../index.php">Home</a></li>
-								<li class="breadcrumb-item active">Evaluation</li>
+                                <?php
+                                if(isset($_GET["asTutor"])) { 
+                                    echo '<li class="breadcrumb-item"><a href="../index.php?asTutor='.$_GET["asTutor"].'">Home</a></li>';
+                                    echo '<li class="breadcrumb-item active">Evaluation</li>';
+                                } else {
+                                    echo '<li class="breadcrumb-item"><a href="../index.php">Home</a></li>';
+                                    echo '<li class="breadcrumb-item active">Evaluation</li>';
+                                }
+                                ?>
 							</ol>
 						</div>
 					</div>
@@ -106,8 +122,10 @@
                         <div class="col-12">
                             <div class="card">
                                 <div class="card-header">
-                                    <h3 class="card-title">Datatable of  <?php if($page == "Daily Evaluation"){ echo "Daily Evaluation"; } else { echo "Semester Evaluation"; } ?></h3>
-                                    <h3 class="card-title float-sm-right" ><button type="button" class="btn-sm btn-primary btn-block" id="addNewEvaluation" data-evatype='<?php echo $evaType; ?>'><i class="fa fa-folder-plus"></i>&nbsp;&nbsp;&nbsp;Add New Evaluation</button></h3>
+                                    <h3 class="card-title">Datatable of  <?php if($page == "Daily Evaluation"){ echo "Daily Evaluation"; } else if($evaType == "semester"){ echo "Semester Evaluation"; } else {echo "Final Evaluation";}?></h3>
+                                    <?php if($_SESSION["itac_admin"]  && !isset($_GET["asStudent"])  && !isset($_GET["asTutor"])) {?>
+                                        <h3 class="card-title float-sm-right" ><button type="button" class="btn-sm btn-primary btn-block" id="addNewEvaluation" data-evatype='<?php echo $evaType; ?>'><i class="fa fa-folder-plus"></i>&nbsp;&nbsp;&nbsp;Add New Evaluation</button></h3>
+                                    <?php } ?>
                                 </div>
                                 <div class="card-body">
                                     <table id="evaluationTable" class="table table-bordered table-striped">
@@ -126,17 +144,28 @@
                                             <?php
                                              $showFilterSelectionDialog = 1;
                                              if($evaType == "daily"){
-                                                $query = "SELECT evaluation.*, course.*, course_group.* ,course_module.course_module_code, course_module.course_module_name, batch.batch_code, batch.batch_name  FROM evaluation
+                                                $query = "SELECT evaluation.*, course.*, course_group.* ,course_module.course_module_code, course_module.course_module_name, batch.batch_code, batch.batch_name , GROUP_CONCAT(distinct(course_group.group_name)) as `groupName`   FROM evaluation
+                                                        LEFT JOIN evaluation_sub ON evaluation_sub.evaluation_id = evaluation.evaluation_id
                                                         LEFT JOIN batch ON evaluation.batch_id = batch.batch_id 
                                                         LEFT JOIN course ON evaluation.course_id = course.course_id 
                                                         LEFT JOIN course_module ON evaluation.course_module_id = course_module.course_module_id 
-                                                        LEFT JOIN course_group ON evaluation.group_id = course_group.group_id ";
-                                            } else {
-                                                $query = "SELECT evaluation_sem.*, course.*, course_group.*, course_module.course_module_code, course_module.course_module_name, batch.batch_code, batch.batch_name FROM evaluation_sem
+                                                        LEFT JOIN course_group ON evaluation_sub.group_id = course_group.group_id ";
+                                            } else if($evaType == "semester"){
+                                                $query = "SELECT evaluation_sem.*, course.*, course_group.*, course_module.course_module_code, course_module.course_module_name, batch.batch_code, batch.batch_name, GROUP_CONCAT(distinct(course_group.group_name)) as `groupName`  FROM evaluation_sem 
+                                                        LEFT JOIN evaluation_sem_sub ON evaluation_sem_sub.evaluation_id = evaluation_sem.evaluation_id
                                                         LEFT JOIN batch ON evaluation_sem.batch_id = batch.batch_id 
                                                         LEFT JOIN course ON evaluation_sem.course_id = course.course_id
                                                         LEFT JOIN course_module ON evaluation_sem.course_module_id = course_module.course_module_id 
-                                                        LEFT JOIN course_group ON evaluation_sem.group_id = course_group.group_id ";
+                                                        LEFT JOIN course_group ON evaluation_sem_sub.group_id = course_group.group_id ";
+                                                        
+                                            } else {
+                                                $query = "SELECT evaluation_final.*, course.*, course_group.*, course_module.course_module_code, course_module.course_module_name, batch.batch_code, batch.batch_name, GROUP_CONCAT(distinct(course_group.group_name)) as `groupName`  FROM evaluation_final 
+                                                        LEFT JOIN evaluation_final_sub ON evaluation_final_sub.evaluation_id = evaluation_final.evaluation_id
+                                                        LEFT JOIN batch ON evaluation_final.batch_id = batch.batch_id 
+                                                        LEFT JOIN course ON evaluation_final.course_id = course.course_id
+                                                        LEFT JOIN course_module ON evaluation_final.course_module_id = course_module.course_module_id 
+                                                        LEFT JOIN course_group ON evaluation_final_sub.group_id = course_group.group_id ";
+                                                        
                                             }
 
                                             if(isset($_GET["batchNo"]) || isset($_GET["courseCode"]) || isset($_GET["groupNo"])){
@@ -160,6 +189,14 @@
                                                 }
                                             }
 
+                                            if($evaType == "daily"){
+                                                $query .="GROUP BY evaluation_sub.evaluation_id ORDER BY evaluation_id DESC";
+                                            } else if($evaType == "semester"){
+                                                $query .="GROUP BY evaluation_sem_sub.evaluation_id ORDER BY evaluation_id DESC";
+                                            } else if($evaType == "final"){
+                                                $query .="GROUP BY evaluation_final_sub.evaluation_id ORDER BY evaluation_id DESC";
+                                            }
+                                            
                                             //echo $query;
                                             $result = mysqli_query($con,$query);
                                             $counter = 1;
@@ -170,8 +207,14 @@
                                                     echo '<td>'.$counter.'</td>';
                                                     echo '<td>'.$mysqldate.'</td>';
                                                     echo '<td>'.$row["batch_code"].'<br>'.$row["batch_name"].'</td>';
-                                                    echo '<td>Code: '.$row["course_code"].'<br>Name: '.$row["course_name"].'<br>Module: '.$row["course_module_code"].'<br>Name: '.$row["course_module_name"].'</td>';
-                                                    echo '<td>'.$row["group_name"].'</td>';
+                                                    echo '<td>Code: '.$row["course_code"].'<br>Name: '.$row["course_name"].'<br>';
+
+                                                    if($row["evaluation_type"] == "Theory")
+                                                        echo 'Type: <span style="color:#00e32a;">'.$row["evaluation_type"].'</span>';
+                                                    else
+                                                        echo 'Type: <span style="color:#0035e3;">'.$row["evaluation_type"].'</span>';
+                                                    echo '<br>Module: '.$row["course_module_code"].'<br>Name: '.$row["course_module_name"].'</td>';
+                                                    echo '<td>'.$row["groupName"].'</td>';
 
                                                     // if($evaType == "daily"){
                                                     //     $query1 = "SELECT FORMAT((
@@ -192,7 +235,8 @@
                                                     //     echo '<td>'.$row1["evaluationRate"].' / 5.00</td>';
                                                     // }
                                                     echo '<td style="text-align: center;">';
-                                                        echo '<button type="button" style="margin:1px 3px;" class="btn btn-md btn-danger deleteEvaluation" data-evaluation_id="'.$row["evaluation_id"].'"><i class="fa fa-trash-alt"></i></button>';
+                                                        if(!isset($_GET["asTutor"])) 
+                                                            echo '<button type="button" style="margin:1px 3px;" class="btn btn-md btn-danger deleteEvaluation" data-evaluation_id="'.$row["evaluation_id"].'"><i class="fa fa-trash-alt"></i></button>';
                                                         echo '<button type="button" style="margin:1px 3px;" class="btn btn-md btn-info editEvaluation" data-evaluation_id="'.$row["evaluation_id"].'" data-evatype="'.$evaType.'"><i class="fa fa-edit"></i></button>';
                                                     echo '</td>';
                                                 echo '</tr>';
@@ -342,17 +386,35 @@
                 localStorage.clear();
             }
 
+            if(localStorage.getItem("Updated")=="1"){
+                toastr.success('Evaluation has been updated successfully.');
+                localStorage.clear();
+            }
+
             var showFilterSelectionDialog = $("#showFilterSelectionDialog").val();
 
             if(showFilterSelectionDialog == 1){	// No filter was selected then prompt filter selection modal.
-                $("#filterModal").modal();
+                //$("#filterModal").modal();
             }
 		});
 
         $(function () {
             $("#evaluationTable").DataTable({
-            "responsive": true, "lengthChange": false, "autoWidth": false,
-            "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
+            "responsive": false, 
+            "lengthChange": false, 
+            "autoWidth": false,
+            "initComplete": function (settings, json) {  
+                $("#evaluationTable").wrap("<div style='overflow:auto; width:100%;position:relative;'></div>");          
+            },
+            "buttons": [
+                "copy", "csv", "excel", "pdf", "print", "colvis",
+                {
+                    text: '<i class="fa fa-filter" /> Filter</i>',
+                    action: function ( e, dt, node, config ) {
+                        $("#filterModal").modal();
+                    }
+                }
+            ]
             }).buttons().container().appendTo('#evaluationTable_wrapper .col-md-6:eq(0)');
 
             $(document).on('change','#evaluationCourseId',function(){
@@ -365,20 +427,36 @@
 				}
 			});
 
-            $('.deleteEvaluation').click(function() {
+            $("#evaluationTable").on("click",".deleteEvaluation", function () {
 					var evaluation_id = $(this).data('evaluation_id');
                     $("#evaluation_id").val( evaluation_id );
 					$("#deleteModal").modal();
 			});
 
-            $('.editEvaluation').click(function() {
+            $("#evaluationTable").on("click",".editEvaluation", function () {
 					var evaluation_id = $(this).data('evaluation_id');
                     var evaType = $(this).data("evatype");
+                    var currentUrl = window.location.href;
+                    var url = new URL(currentUrl);
+                  
+                    if(url.searchParams.has("asTutor") == true){
+                        var asTutor = url.searchParams.get("asTutor");
 
-                    if(evaType == "daily")
-					    var url = "../pages/evaluation_edit.php?id="+evaluation_id+"&eva_type="+evaType;
-                    else 
-                        var url = "../pages/evaluation_sem_edit.php?id="+evaluation_id+"&eva_type="+evaType;					
+                        if(evaType == "daily")
+                            url = "../pages/evaluation_edit.php?asTutor="+asTutor+"&id="+evaluation_id+"&eva_type="+evaType;
+                        else if(evaType == "semester")
+                            url = "../pages/evaluation_sem_edit.php?asTutor="+asTutor+"&id="+evaluation_id+"&eva_type="+evaType;	
+                        else 			
+                            url = "../pages/evaluation_final_edit.php?asTutor="+asTutor+"&id="+evaluation_id+"&eva_type="+evaType;	
+                    } else {
+
+                        if(evaType == "daily")
+                            url = "../pages/evaluation_edit.php?id="+evaluation_id+"&eva_type="+evaType;
+                        else if(evaType == "semester")
+                            url = "../pages/evaluation_sem_edit.php?id="+evaluation_id+"&eva_type="+evaType;	
+                        else 			
+                            url = "../pages/evaluation_final_edit.php?id="+evaluation_id+"&eva_type="+evaType;	
+                    }	
 					window.location.href = url;
 			});
 
@@ -387,8 +465,10 @@
 
                     if(evaType == "daily")
 					    var url = "../pages/evaluation_add.php?eva_type="+evaType;
-                    else 
+                    else if(evaType == "semester")
                         var url = "../pages/evaluation_sem_add.php?eva_type="+evaType;
+                    else
+                        var url = "../pages/evaluation_final_add.php?eva_type="+evaType;
 					window.location.href = url;
 			});
                 

@@ -37,11 +37,23 @@ if (isset($_POST["studentName"])) {
 			$studentStatus = 'Inactive';
 		}
 
+		if(isset($_POST["studentFinancing"])){
+			$studentFinancing = 'Loan';
+		} else {
+			$studentFinancing = 'Cash';
+		}
+
+		if(isset($_POST["studentHostel"])){
+			$studentHostel = 'Yes';
+		} else {
+			$studentHostel = 'No';
+		}
+
 		$hashedPassword = password_hash(mysqli_real_escape_string($con,$_POST["account_password"]), PASSWORD_DEFAULT);
 		$query = "INSERT INTO account SET account_username = '" . mysqli_real_escape_string($con, $_POST["studentUsername"]) . "', 
 					account_name = '" . mysqli_real_escape_string($con, $_POST["studentName"]) . "', 
 					account_ic = '" . mysqli_real_escape_string($con, $_POST["studentICNumber"]) . "', 
-					account_dob = STR_TO_DATE('" . mysqli_real_escape_string($con, $_POST["studentDOB"]) . "', '%d/%m/%Y'), 
+					account_dob = '" . mysqli_real_escape_string($con, $_POST["studentDOB"]) . "', 
 					account_email = '" . mysqli_real_escape_string($con, $_POST["studentEmail"]) . "', 
 					account_phone_no = '" . mysqli_real_escape_string($con, $_POST["studentPhoneNumber"]) . "', 
 					account_e_name = '" . mysqli_real_escape_string($con, $_POST["studentEmergencyName"]) . "', 
@@ -52,19 +64,33 @@ if (isset($_POST["studentName"])) {
 					account_e_phone_no_2 = '" . mysqli_real_escape_string($con, $_POST["studentEmergencyPhone2"]) . "', 
 					account_address_line1 = '" . mysqli_real_escape_string($con, $_POST["studentAddressLine1"]) . "', 
 					account_address_line2 = '" . mysqli_real_escape_string($con, $_POST["studentAddressLine2"]) . "', 
-					account_postcode = '" . mysqli_real_escape_string($con, $_POST["studentPostcode"]) . "', 
-					account_state = '" . mysqli_real_escape_string($con, $_POST["studentState"]) . "', 
-					account_country = '" . mysqli_real_escape_string($con, $_POST["studentCountry"]) . "', 
-					account_enroll_date = STR_TO_DATE('" . mysqli_real_escape_string($con, $_POST["studentEnrollDate"]) . "', '%d/%m/%Y'), 
+					account_postcode = '" . mysqli_real_escape_string($con, $_POST["studentPostcode"]) . "', ";
+
+		if(isset($_POST["studentState"]))	
+			$query .= "account_state = '" . mysqli_real_escape_string($con, $_POST["studentState"]) . "', ";
+			
+		if(isset($_POST["studentCountry"]))		
+			$query .= "account_country = '" . mysqli_real_escape_string($con, $_POST["studentCountry"]) . "', ";
+			$query .= "account_enroll_date = '" . mysqli_real_escape_string($con, $_POST["studentEnrollDate"]) . "', 
 					account_status = '" . $studentStatus . "', 
+					account_hostel = '" . $studentHostel . "', 
+					account_financing = '" . $studentFinancing . "', 
 					account_remark = '" . mysqli_real_escape_string($con, $_POST["studentDescription"]) . "', 
 					account_password = '" . $hashedPassword . "',
-					account_level_id = '1',
+					account_level_id = '3',
 					account_type = 'STUDENT'";
+		$result = mysqli_query($con, $query);
+		// echo $query;
+		$last_id = mysqli_insert_id($con);
+
+		$query = "INSERT INTO batch_sub SET 
+					batch_id = '" . mysqli_real_escape_string($con, $_POST["studentBatchNumber"]) . "', 					
+					account_id = '".$last_id."'";
+		// echo $query;
 		$result = mysqli_query($con, $query);
 
 		echo '<script>localStorage.setItem("Added",1)</script>';	// Successful added flag.
-		echo "<script>window.location='student.php'</script>";
+		echo "<script>window.location='student_edit.php?id=".$last_id."'</script>";
 	}
 	exit;
 }
@@ -146,9 +172,9 @@ if (isset($_POST["studentName"])) {
 									<div class="form-group">
 										<label for="inputName">Date Of Birth</label>
 										<div class="input-group">
-											<input type="text" name="studentDOB" id="studentDOB" class="form-control" data-inputmask-alias="datetime" data-inputmask-inputformat="dd/mm/yyyy" data-mask>
+											<input type="date" name="studentDOB" id="studentDOB" class="form-control" >
 											<div class="input-group-prepend">
-												<span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+												<!-- <span class="input-group-text"><i class="far fa-calendar-alt"></i></span> -->
 											</div>
 										</div>
 									</div>
@@ -226,7 +252,7 @@ if (isset($_POST["studentName"])) {
 												<div class="input-group">
 													<select class="form-control" name="studentState" id="studentState">
                                                         <?php
-                                                            echo '<option value="" selected readonly>----- State -----</option>';
+                                                            echo '<option value="" selected disabled>----- State -----</option>';
                                                             $query = "select * from state";
                                                             $result = mysqli_query($con, $query);
                                                             while($row = mysqli_fetch_assoc($result)){
@@ -245,7 +271,7 @@ if (isset($_POST["studentName"])) {
 												<div class="input-group">
 													<select class="form-control" name="studentCountry" id="studentCountry">
 														<?php
-															echo '<option value="" selected readonly>----- Country -----</option>';
+															echo '<option value="" selected disabled>----- Country -----</option>';
 															$query = "select * from country";
 															$result = mysqli_query($con, $query);
 															while($row = mysqli_fetch_assoc($result)){
@@ -263,10 +289,48 @@ if (isset($_POST["studentName"])) {
 											<div class="form-group col-lg-6">
 												<label for="inputName">Date Of Enrollment</label>
 												<div class="input-group">
-													<input type="text" name="studentEnrollDate" id="studentEnrollDate" class="form-control" data-inputmask-alias="datetime" data-inputmask-inputformat="dd/mm/yyyy" data-mask>
+													<input type="date" name="studentEnrollDate" id="studentEnrollDate" class="form-control" value="<?php echo date('Y-m-d'); ?>">
 													<div class="input-group-prepend">
-														<span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+														<!-- <span class="input-group-text"><i class="far fa-calendar-alt"></i></span> -->
 													</div>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="form-group" style="margin-bottom:0px;">
+										<div class="row">
+											<div class="form-group col-lg-6">
+												<label for="inputName">Batch Number</label>
+												<div class="input-group">
+													<!-- <input type="text" name="studentBatchNumber" id="studentBatchNumber" class="form-control" readonly value="<?php echo $row0["batch_code"]; ?>">													 -->
+											
+                                                    <select class="form-control" name="studentBatchNumber" id="studentBatchNumber">
+                                                    <?php
+                                                        echo '<option value="" selected disabled>----- Batch -----</option>';
+                                                        $query = "select * from batch";
+                                                        $result = mysqli_query($con, $query);
+                                                        while($row = mysqli_fetch_assoc($result)){
+                                                            echo '<option value="'.$row["batch_id"].'" ';                                                        
+                                                            echo '>'.$row["batch_code"].'</option>';
+                                                        }
+                                                    ?>
+                                                    </select>
+												</div>
+											</div>
+										</div>
+									</div>
+									<div class="form-group" style="margin-bottom:0px;">
+										<div class="row">
+											<div class="form-group col-lg-6">
+												<label for="studentHostel">Hostel &nbsp;</label>
+												<div class="input-group">
+													<input type="checkbox" name="studentHostel" id="studentHostel" checked data-bootstrap-switch data-off-text="No" data-off-color="danger" data-on-text="Yes" data-on-color="success" data-size="medium">
+												</div>
+											</div>
+											<div class="form-group col-lg-6">
+												<label for="studentFinancing">Financing &nbsp;</label>
+												<div class="input-group">
+													<input type="checkbox" name="studentFinancing" id="studentFinancing" checked data-bootstrap-switch data-off-text="Cash" data-off-color="yellow" data-on-text="Loan" data-on-color="blue" data-size="medium">
 												</div>
 											</div>
 										</div>
@@ -345,7 +409,7 @@ if (isset($_POST["studentName"])) {
 											</div>
 											<div class="form-group col-lg-6">
 												<div class="input-group">
-													<button type="submit" id="submitstudentForm" class="btn btn-primary btn-block">SUBMIT <i class="fa fa-arrow-right"></i></button>
+													<button type="submit" id="submitstudentForm" class="btn btn-primary btn-block">Save and Enroll <i class="fa fa-arrow-right"></i></button>
 												</div>
 											</div>
 										</div>
@@ -437,6 +501,9 @@ if (isset($_POST["studentName"])) {
 					studentPasswordRetype: {
 						required: true,
 						samePassword: true
+					},
+					studentBatchNumber: {
+						required: true
 					}
 				},
 				messages: {
@@ -459,6 +526,9 @@ if (isset($_POST["studentName"])) {
 					studentPasswordRetype: {
 						required: "Please provide a password",
 						samePassword: "Retype Password must be same as the Password."
+					},
+					studentBatchNumber: {
+						required: "Please select a batch number"
 					}
 				},
 				errorElement: 'span',

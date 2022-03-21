@@ -9,6 +9,12 @@ if($_GET["eva_type"] == "daily"){
 	$page = "Semester Evaluation";
 }
 
+if(isset($_GET["asStudent"])){
+	$accountId = $_GET["asStudent"];
+} else {
+	$accountId = $_SESSION["itac_user_id"];
+}
+
 if (!(isset($_SESSION["itac_user_id"]))) {
 	echo "<script>window.location='login.php'</script>";
 	exit;
@@ -36,10 +42,7 @@ if (isset($_POST["evaluationId"])) {
 				session_id = '" . mysqli_real_escape_string($con, $_POST["evaluationSessionId"]) . "', 
 				evaluation_type = '" . mysqli_real_escape_string($con, $_POST["evaluationSessionType"]) . "', 
 				evaluation_date = STR_TO_DATE('" . mysqli_real_escape_string($con, $_POST["evaluationDate"]) . "', '%d/%m/%Y'), 
-				account_id = '" . $_SESSION["itac_user_id"] . "', 
-				course_id = '" . mysqli_real_escape_string($con, $_POST["evaluationCourseId"]) . "', 
-				course_module_id = '" . mysqli_real_escape_string($con, $_POST["evaluationCourseModule"]) . "', 
-				group_id = '" . mysqli_real_escape_string($con, $_POST["evaluationCourseGroup"]) . "'
+				account_id = '" . $_SESSION["itac_user_id"] . "' 
 				WHERE evaluation_id = '" . $evaluation_id . "'";
 	$result = mysqli_query($con, $query);
 	//echo $query;
@@ -96,9 +99,26 @@ if (isset($_POST["evaluationId"])) {
 						</div>
 						<div class="col-sm-6">
 							<ol class="breadcrumb float-sm-right">
-								<li class="breadcrumb-item"><a href="../index.php">Home</a></li>
-								<li class="breadcrumb-item"><a href="evaluation.php?eva_type=<?php echo $evaType;?>">Evaluation</a></li>
-								<li class="breadcrumb-item active">Daily Evaluation</li>
+							<?php
+                                if(isset($_GET["asStudent"])) {
+									echo '<li class="breadcrumb-item"><a href="../index.php?asStudent='.$_GET["asStudent"].'">Home</a></li>';
+								} if(isset($_GET["asTutor"])) { 
+									echo '<li class="breadcrumb-item"><a href="../index.php?asTutor='.$_GET["asTutor"].'">Home</a></li>';
+								} else {
+									echo '<li class="breadcrumb-item"><a href="../index.php">Home</a></li>';
+								}
+
+								if(isset($_GET["viewType"]) == "readonly"){
+									echo '<li class="breadcrumb-item">Evaluation</li>';
+									echo '<li class="breadcrumb-item active">Daily Evaluation</li>';
+								} if(isset($_GET["asTutor"])) { 
+									echo '<li class="breadcrumb-item"><a href="evaluation.php?eva_type='.$evaType.'&asTutor='.$_GET["asTutor"].'">Evaluation</a></li>';
+									echo '<li class="breadcrumb-item active">Daily Evaluation</li>';
+								} else {
+									echo '<li class="breadcrumb-item"><a href="evaluation.php?eva_type='.$evaType.'">Evaluation</a></li>';
+									echo '<li class="breadcrumb-item active">Daily Evaluation</li>';
+								}
+							?>
 							</ol>
 						</div>
 					</div>
@@ -109,13 +129,21 @@ if (isset($_POST["evaluationId"])) {
 				<form name="edit_evaluation" id="edit_evaluation" class="col-lg-12" method="POST">
 					<div class="row">
 						<div class="col-md-6">
-							<div class="card card-primary">
+							<div class="card card-primary collapsed-card">
 								<div class="card-header">
 									<h3 class="card-title">General</h3>
+									<?php
+									if(isset($_GET["viewType"])){
+										echo '<input type="hidden" id="viewType" value="'.$_GET["viewType"].'">';
+									} else {
+										echo '<input type="hidden" id="viewType" value="">';
+									}
+									
+									?>
 
 									<div class="card-tools">
 										<button type="button" class="btn btn-tool" data-card-widget="collapse" title="Collapse">
-											<i class="fas fa-minus"></i>
+											<i class="fas fa-plus"></i>
 										</button>
 									</div>
 								</div>
@@ -184,22 +212,22 @@ if (isset($_POST["evaluationId"])) {
 											?>
 										</select>		
 									</div>
-									<div class="form-group">
+									<!-- <div class="form-group">
 										<label for="inputName">Group Name</label>
-										<input type="hidden" name="evaluationCourseGroup" value="<?php echo $row0["group_id"]; ?>">
+										<input type="hidden" name="evaluationCourseGroup" value="<?php //echo $row0["group_id"]; ?>">
 										<select name='evaluationCourseGroup' id='evaluationCourseGroup' class='form-control form-control-sm' disabled>
 										<?php
-										$query = "SELECT group_id, group_name FROM course_group WHERE course_id = '".$row0["course_id"]."'";
-										$result = mysqli_query($con, $query);
-										while($row = mysqli_fetch_assoc($result)){
-											echo '<option value="'.$row["group_id"].'" ';
-											if($row0["group_id"] == $row["group_id"])
-												echo "selected";
-											echo '>'.$row["group_name"].'</option>';
-										}		
+										// $query = "SELECT group_id, group_name FROM course_group WHERE course_id = '".$row0["course_id"]."'";
+										// $result = mysqli_query($con, $query);
+										// while($row = mysqli_fetch_assoc($result)){
+										// 	echo '<option value="'.$row["group_id"].'" ';
+										// 	if($row0["group_id"] == $row["group_id"])
+										// 		echo "selected";
+										// 	echo '>'.$row["group_name"].'</option>';
+										// }		
 										?>
 										</select>
-									</div>
+									</div> -->
 									<div class="form-group">
 										<label for="inputName">Module</label>
 										<input type="hidden" name="evaluationCourseModule" value="<?php echo $row0["course_module_id"]; ?>">
@@ -218,16 +246,19 @@ if (isset($_POST["evaluationId"])) {
 									</div>
 									<div class="form-group">
 										<label for="inputName">Session Type</label>
+										<?php
+											$sessionType = $row0['evaluation_type'];
+										?>
 										<div>
 											<div class="btn-group btn-group-toggle" data-toggle="buttons">
 												<label class="btn bg-olive active">
 													<input type="radio" name="evaluationSessionType" id="option_b1" value = 'Theory' 
-													<?php if($row0['evaluation_type'] == 'Theory') echo 'checked'; ?>
+													<?php if($sessionType == 'Theory') echo 'checked'; ?>
 													> Theory
 												</label>
 												<label class="btn bg-olive">
 													<input type="radio" name="evaluationSessionType" id="option_b2" value = 'Practical' 
-													<?php if($row0['evaluation_type'] == 'Practical') echo 'checked'; ?>
+													<?php if($sessionType == 'Practical') echo 'checked'; ?>
 													> Practical
 												</label>
 											</div>
@@ -253,61 +284,131 @@ if (isset($_POST["evaluationId"])) {
 								<div class="card-body">
 									<div class="row">
 										<div class="col-12">
+											<?php
+												$query0 = "SELECT course_group.* FROM evaluation_sub LEFT JOIN course_group ON evaluation_sub.group_id = course_group.group_id 
+														WHERE evaluation_sub.evaluation_id = '".mysqli_real_escape_string($con,$_GET["id"])."' group by evaluation_sub.group_id";
+												$result0 = mysqli_query($con, $query0);
+												//echo $query0;
+												while($row0 = mysqli_fetch_assoc($result0)){	
+											?>
 											<div class="card">
 											<div class="card-header bg-success">
-												Daily Evaluation Form
+												Daily Evaluation Form: <?php echo $row0["group_name"];?>
 											</div>
 											<!-- ./card-header -->
 											<div class="card-body p-0">
-												<table id="evaluationFormTable" class="table table-hover">
-												<tbody>													
-													<?php
-													$counter = 0;
-													$studentId = "";
-													$query1 = "SELECT DISTINCT(course_module_criteria.cmc_id), course_module_criteria.* FROM course_module_criteria 
-													LEFT JOIN evaluation_sub ON evaluation_sub.cmc_id = course_module_criteria.cmc_id
-													WHERE evaluation_sub.evaluation_id = '".mysqli_real_escape_string($con,$_GET["id"])."'";
-													$result1 = mysqli_query($con, $query1);
+												<div style='overflow:auto; width:100%;position:relative;'>
+													<table id="evaluationFormTable" class="table table-hover">
+														<tbody>													
+															<?php
+															$counter = 0;
+															$cmcId = "";
+															if($sessionType == 'Theory'){
+																$query1 = "SELECT distinct(account.account_id), account.account_name, cmc_id, 'Theory' as cmc_name, '-1' as course_module_id FROM evaluation_sub 
+																LEFT JOIN account ON evaluation_sub.account_id = account.account_id 															
+																WHERE evaluation_sub.evaluation_id = '".mysqli_real_escape_string($con,$_GET["id"])."' AND evaluation_sub.group_id= '".$row0["group_id"]."' ";
 
-													$query2 = "SELECT evaluation_sub.*, account.account_name, course_module_criteria.* FROM evaluation_sub 
-													LEFT JOIN account ON evaluation_sub.account_id = account.account_id 
-													LEFT JOIN course_module_criteria ON evaluation_sub.cmc_id = course_module_criteria.cmc_id 
-													WHERE evaluation_sub.evaluation_id = '".mysqli_real_escape_string($con,$_GET["id"])."'";
-													$result2 = mysqli_query($con, $query2);
+																if(isset($_GET["viewType"]) == "readonly" || isset($_GET["asStudent"])) {
+																	$query1 .= "AND account.account_id='".$accountId."' ";
+																} 
 
-													echo "<tr id='evaluationFormHeader'>";
-														echo "<td style='width:5px; text-align:center;'>No.</td><td style='width:80px;'>Student Name</td>";
+																$query1 .= "group by account_id";
+															} else {
+																$query1 = "SELECT distinct(account.account_id), account.account_name, course_module_criteria.* FROM evaluation_sub 
+																LEFT JOIN account ON evaluation_sub.account_id = account.account_id 
+																LEFT JOIN course_module_criteria ON evaluation_sub.cmc_id = course_module_criteria.cmc_id 
+																WHERE evaluation_sub.evaluation_id = '".mysqli_real_escape_string($con,$_GET["id"])."' AND evaluation_sub.group_id= '".$row0["group_id"]."' ";
 
-														while($row1 = mysqli_fetch_assoc($result1)){																												
-															echo "<td style='width:100px; text-align:center;'>".$row1["cmc_name"]."</td>";														
-														}
-													echo "</tr>";
-													
-													while($row2 = mysqli_fetch_assoc($result2)){														
+																if(isset($_GET["viewType"]) == "readonly" || isset($_GET["asStudent"])) {
+																	$query1 .= "AND account.account_id='".$accountId."' ";
+																} 
 
-														if($studentId != $row2["account_id"]){
-															$counter++;
-															$studentId = $row2["account_id"];
-															echo "<tr>";
-																echo "<td style='width:5px; text-align:center;'>".$counter."<input type='hidden' name='studentId' value='".$row2["account_id"]."'></td><td style='width:80px;'>".$row2["account_name"]."</td>";
-														}																											
-																echo "<td class='cmcColumn' style='width:100px; text-align:center;'>
-																		<div><div>
-																		<input type='number' name='evaRate' min='0' max='5' step='0.5' value='".$row2["eva_rate"]."'>
-																		<input type='hidden' name='evaSubId' value='".$row2["eva_sub_id"]."'>
-																		<input type='hidden' name='cmcId' value='".$row2["cmc_id"]."'>
-																		<input type='hidden' name='eva_comment".$row2["account_id"]."&".$row2["cmc_id"]."' value='".$row2["eva_comment"]."'>
-																		</div></div>
-																		<button type='button' class='btn btn-sm commentBtn' style='background-color:transparent' ><i class='fas fa-plus'></i> Comment</button>
-																		</td>";
-														//echo "</tr>";
-													}
-													?>																									
-												</tbody>
-												</table>
+																$query1 .= "group by account_id";
+															}
+															
+															$result1 = mysqli_query($con, $query1);	// Get Student Name
+															//echo $query1;											
+
+															echo "<tr id='evaluationFormHeader'>";
+																echo "<td style='width:5px; text-align:center;'>No.</td><td style='width:100px;'>Criteria Name</td>";
+
+																while($row1 = mysqli_fetch_assoc($result1)){																												
+																	echo "<td style='width:100px; text-align:center;'>".$row1["account_name"]."</td>";														
+																}
+															echo "</tr>";
+															
+															if($sessionType == 'Theory'){
+																$query2 = "SELECT '-1' as cms_id, 'Theory' as cms_name";
+															} else {
+																$query2 = "SELECT DISTINCT(course_module_sub_criteria.cms_id), course_module_sub_criteria.* FROM course_module_sub_criteria 
+																LEFT JOIN evaluation_sub ON evaluation_sub.cmc_id = course_module_sub_criteria.cms_id
+																WHERE evaluation_sub.evaluation_id = '".mysqli_real_escape_string($con,$_GET["id"])."'";
+															}
+															
+															$result2 = mysqli_query($con, $query2);	// Get sub module name.
+															//echo $query2;
+															
+															while($row2 = mysqli_fetch_assoc($result2)){		
+																
+																if($sessionType == 'Theory'){
+																	$query3 = "SELECT evaluation_sub.*, evaluation_sub.cmc_id as cms_id, account.account_name FROM evaluation_sub 
+																	LEFT JOIN account ON evaluation_sub.account_id = account.account_id 																	
+																	WHERE evaluation_sub.evaluation_id = '".mysqli_real_escape_string($con,$_GET["id"])."' AND evaluation_sub.group_id= '".$row0["group_id"]."' "; 
+																	
+																	if(isset($_GET["viewType"]) == "readonly" || isset($_GET["asStudent"])) {
+																		$query3 .= "AND account.account_id='".$accountId."' ";
+																	} 	
+																	
+																	$query3 .="AND cmc_id ='".$row2["cms_id"]."'";
+																} else {
+																	$query3 = "SELECT evaluation_sub.*, account.account_name, course_module_sub_criteria.* FROM evaluation_sub 
+																	LEFT JOIN account ON evaluation_sub.account_id = account.account_id 
+																	LEFT JOIN course_module_sub_criteria ON evaluation_sub.cmc_id = course_module_sub_criteria.cms_id 
+																	WHERE evaluation_sub.evaluation_id = '".mysqli_real_escape_string($con,$_GET["id"])."' AND evaluation_sub.group_id= '".$row0["group_id"]."' ";
+
+																	if(isset($_GET["viewType"]) == "readonly" || isset($_GET["asStudent"])) {
+																		$query3 .= "AND account.account_id='".$accountId."' ";
+																	} 
+
+																	$query3 .="AND course_module_sub_criteria.cms_id ='".$row2["cms_id"]."'";
+																}
+																
+																$result3 = mysqli_query($con, $query3);		// Get student mark.
+																//echo $query3;	
+
+																if($cmcId != $row2["cms_id"]){
+																	$counter++;
+																	$cmcId = $row2["cms_id"];
+																	echo "<tr>";
+																		echo "<td style='width:5px; text-align:center;'>".$counter."</td><td style='width:100px;'>".$row2["cms_name"]."</td>";
+																}			
+																while($row3 = mysqli_fetch_assoc($result3)){																								
+																	echo "<td class='cmcColumn' style='width:1000px; text-align:center;'>
+																			<div><div>
+																			<input type='number' class='evaRate' name='evaRate' inputmode='decimal' min='0' max='100' step='0.5' value='".$row3["eva_rate"]."'>
+																			<input type='hidden' name='evaSubId' value='".$row3["eva_sub_id"]."'>
+																			<input type='hidden' name='evaImage' value='".$row3["eva_image_path"]."'>
+																			<input type='hidden' name='cmcId' value='".$row3["cms_id"]."'>
+																			<input type='hidden' name='studentId' value='".$row3["account_id"]."'>
+																			<input type='hidden' name='eva_comment".$row3["account_id"]."&".$row3["cms_id"]."' value='".$row3["eva_comment"]."'>
+																			</div></div>";
+
+																			if($row3["eva_comment"] != "" || $row3["eva_image_path"] != "")
+																				echo "<button type='button' class='btn btn-sm commentBtn' style='background-color:transparent;' ><i class='fas fa-plus-circle' style='color:red;'></i> Comment</button>";
+																			else
+																				echo "<button type='button' class='btn btn-sm commentBtn' style='background-color:transparent;' ><i class='fas fa-plus-circle' ></i> Comment</button>";
+																			echo "</td>";
+																}
+																echo "</tr>";
+															}
+															?>																									
+														</tbody>
+													</table>
+												</div>
 											</div>
 											<!-- /.card-body -->
 											</div>
+											<?php } ?>
 											<!-- /.card -->
 										</div>
 										<div class="col-12">
@@ -315,12 +416,20 @@ if (isset($_POST["evaluationId"])) {
 												<div class="row">
 													<div class="form-group col-lg-6">
 														<div class="input-group">
-															<button type="button" class="btn btn-danger btn-block" onclick="window.location='evaluation.php?eva_type=daily'"><i class="fa fa-arrow-left"></i> BACK</button>
+															<?php if(isset($_GET["viewType"]) == "readonly" && !isset($_GET["asStudent"])){ ?>
+																<button type="button" class="btn btn-danger btn-block" onclick="window.location='../index.php'"><i class="fa fa-arrow-left"></i> BACK</button>
+															<?php } else if(isset($_GET["asStudent"])) { ?>
+																<button type="button" class="btn btn-danger btn-block" onclick="window.location='../index.php?asStudent=<?php echo $_GET['asStudent'];?>'"><i class="fa fa-arrow-left"></i> BACK</button>
+															<?php } else { ?>
+																<button type="button" class="btn btn-danger btn-block" onclick="window.location='evaluation.php?<?php if(isset($_GET['asTutor'])) echo 'asTutor='.$_GET['asTutor'];?>&eva_type=daily'"><i class="fa fa-arrow-left"></i> BACK</button>
+															<?php } ?>
 														</div>
 													</div>
 													<div class="form-group col-lg-6">
 														<div class="input-group">
-															<button type="button" id="saveEvaluationForm" class="btn btn-primary btn-block" data-evatype='<?php echo $evaType;?>'>Save Evaluation Form <i class="fa fa-save"></i></button>
+															<button type="button" id="saveEvaluationForm" class="btn btn-primary btn-block" data-evatype='<?php echo $evaType;?>'
+															<?php if(isset($_GET["viewType"]) == "readonly" || isset($_GET["asStudent"]) || isset($_GET["asTutor"])){ echo "disabled"; }?>
+															>Save Evaluation Form <i class="fa fa-save"></i></button>
 														</div>
 													</div>
 												</div>
@@ -350,12 +459,17 @@ if (isset($_POST["evaluationId"])) {
 					
 					<div class="modal-body">
 						<input type="hidden" name="cmcId" id="cmcId">
+						<input type="hidden" name="evaSubId" id="evaSubId">
 						<input type="hidden" name="studentId" id="studentId">
-						<textarea name="evaComment" id="evaComment"></textarea>
+						<input type="hidden" name="evaImagePath" id="evaImagePath">
+						<textarea name="evaComment" id="evaComment" style="min-width: 100%" rows="5"></textarea>
+						<input type="file" class="form-control evaImage" name="evaImage" id="evaImage">
 					</div>
 					<div class="modal-footer justify-content-center">
 						<button type="button" class="btn btn-outline-secondary" data-dismiss="modal">Close</button>
-						<button type="button" class="btn btn-outline-danger commentModalSave">Save</button>
+						<button type="button" class="btn btn-outline-danger commentModalSave" 
+						<?php if(isset($_GET["viewType"]) == "readonly"){ echo "disabled"; }?>
+						>Save</button>
 					</div>
 					
 				</div>
@@ -480,7 +594,7 @@ if (isset($_POST["evaluationId"])) {
 					var appendRow = "";
 
 					if($("#enrolledCourseHeader").length == 0){
-						tblHeader = "<tr id='enrolledCourseHeader'><td style='width:20px; text-align:center;'>No.</td><td>Student Name</td>"+
+						tblHeader = "<tr id='enrolledCourseHeader'><td style='width:20px; text-align:center;'>No.</td><td >Student Name</td>"+
 						"<td style='width:100px; text-align:center;'>Hands On</td>"+
 						"<td style='width:100px; text-align:center;'>Model</td></tr>";
 					}
@@ -504,86 +618,16 @@ if (isset($_POST["evaluationId"])) {
 				}
 			});
 		}
-
-		function getEvaluationForm(){	
-
-			var courseModuleCriteria;
-			var studentInfo;
-
-			jQuery.ajax({
-				type: "POST",
-				url: "../pages/includes/get_course_module_criteria.php",
-				data: {id: $("#evaluationCourseModule").val()},
-				datatype: "json",
-				async: false,
-				success: function(data, textStatus, xhr) {
-					data = JSON.parse(xhr.responseText);
-					courseModuleCriteria = JSON.parse(xhr.responseText);
-				}
-			});
-
-			var tbl = $("#evaluationFormTable");
-			var counter = 0;
-			$(tbl).find('tr').remove();
-
-			$('#enrolledStudentTable tr').each(function () {
-				var studentId = $(this).find('input[name="studentId"]').val();
-				var tblHeader = "";
-				var appendRow = "";
-
-				if($(this).find('td div input[type="radio"]:checked').val() == 'Hands On'){
-					counter++;
-					
-					$(this).find('td div input[type="radio"]:checked').each(function () {
-						
-						jQuery.ajax({
-							type: "POST",
-							url: "../pages/includes/get_student_info.php",
-							data: {id: studentId},
-							datatype: "json",
-							async: false,
-							success: function(data, textStatus, xhr) {
-								data = JSON.parse(xhr.responseText);
-								studentInfo = JSON.parse(xhr.responseText);
-							}
-						});
-
-						if($("#evaluationFormHeader").length == 0){
-							
-							tblHeader = "<tr id='evaluationFormHeader'><td style='width:5px; text-align:center;'>No.</td><td style='width:80px;'>Student Name</td>";
-
-							for (var i = 0, len = courseModuleCriteria.length; i < len; i++) {
-								var desc = courseModuleCriteria[i].name;
-								tblHeader += "<td style='width:100px; text-align:center;'>"+desc+"</td>";
-								
-							}
-							tblHeader += "</tr>";
-							appendRow += tblHeader;
-							$(appendRow).appendTo(tbl);
-						}
-						
-						appendRow = "<tr><td style='width:5px; text-align:center;'>"+counter+"<input type='hidden' name='studentId' value='"+studentId+"'></td>";
-
-						for (var i = 0, len = studentInfo.length; i < len; i++) {
-							var desc = studentInfo[i].studentName;
-							appendRow += "<td style='width:80px;'>"+desc+"</td>";
-							for (var i = 0, len = courseModuleCriteria.length; i < len; i++) {
-								appendRow += "<td class='cmcColumn' style='width:100px; text-align:center;'><div><div><input name='evaRate' class='rating rating-loading' data-min='0' data-max='5' data-step='0.5' value=''><input type='hidden' name='cmcId' value='"+courseModuleCriteria[i].id+"'></div></div></td>";
-							}
-						}
-						appendRow += "</tr>";
-						$(appendRow).appendTo(tbl);
-						
-					});
-				}
-			});
-
-			$.getScript( "../plugins/rating-stars.js", function() {
-				console.log( "Successfully Loaded." );
-			});
-		}
 		
 		$(function() {
+
+			var currentUrl = window.location.href;
+        	var url = new URL(currentUrl);
+
+			if($('#viewType').val() == "readonly" || url.searchParams.has("asTutor") == true){
+				$('input, textarea').attr('disabled', true);
+			}
+
 			$(':radio:not(:checked)').attr('disabled', true);
 
 			$(document).on('change','#evaluationCourseId',function(){
@@ -608,22 +652,82 @@ if (isset($_POST["evaluationId"])) {
 
 			$(document).on('click', ".commentBtn", function() {	// Use delegate function to register those dynamically added classes.
 					var cmcId = $(this).closest("td").find("input[name='cmcId']").val();
-					var studentId = $(this).closest("tr").find("input[name='studentId']").val();
-					var evaComment = $(this).closest("tr").find('input[name="eva_comment'+studentId+'&'+cmcId+'"]').val();
+					var studentId = $(this).closest("td").find("input[name='studentId']").val();
+					var evaComment = $(this).closest("td").find('input[name="eva_comment'+studentId+'&'+cmcId+'"]').val();
+					var evaSubId = $(this).closest("td").find('input[name="evaSubId"]').val();
+					var evaImage = $(this).closest("td").find('input[name="evaImage"]').val();
 
 					$("#cmcId").val( cmcId );
+					$("#evaSubId").val( evaSubId );
 					$("#studentId").val( studentId );
 					$("#evaComment").val( evaComment );
+					$("#evaImagePath").val(evaImage);
+					$("#evaImage").val("");
+					$("#commentModal img, h5").remove();
+
+					if(evaImage != ""){
+						$("#commentModal .modal-body").prepend('<h5>Evaluation Image:</h5><img src="../evaPhoto/'+evaImage+'" style="padding: 10px; display: block; margin-left: auto; margin-right: auto; width: 50%;border-radius: 10%;"/>');
+					} 
+
 					$("#commentModal").modal();
+			});
+
+			$(document).on('change','.evaRate',function(){
+				if(this.value>100){
+					this.value='100';
+				}else if(this.value<0){
+					this.value='0';
+				}
+			});
+
+			$('.evaImage').change(function() {
+
+				if($(this).val() == ''){
+					return;
+				}
+
+				var myFormData = new FormData();
+				// myFormData.append('file', $('#cart_image')[0].files[0]);
+				// myFormData.append('cartSubId', $('#cart_image').attr('data-field'));
+
+				myFormData.append('evaImage', $(this)[0].files[0]);
+				myFormData.append('evaSubId', $(this).parent().find('input[name="evaSubId"]').val());
+				myFormData.append('evaType', "Daily");
+
+				jQuery.ajax({
+					url: 'includes/upload_eva_image.php',
+					type: 'POST',
+					processData: false, // important
+					contentType: false, // important
+					data: myFormData,
+					success : function(data) {
+						console.log(data);
+						// location.reload();
+						$("#commentModal img, h5").remove();	
+						$("#commentModal .modal-body").prepend('<h5>Evaluation Image:</h5><img src="../evaPhoto/'+data+'" style="padding: 10px; display: block; margin-left: auto; margin-right: auto; width: 50%;border-radius: 10%;"/>');			
+						$("#commentModal #evaImagePath").val(data);
+						
+					}
+				});
+
 			});
 
 			$(".commentModalSave").click(function() {
 				var evaComment = $("#evaComment").val();
+				var evaImagePath = $("#evaImagePath").val();
 				$('input[name="eva_comment'+$("#studentId").val()+'&'+$("#cmcId").val()+'"]').val( evaComment );
+				$('input[name="eva_comment'+$("#studentId").val()+'&'+$("#cmcId").val()+'"]').parent().find('input[name="evaImage"]').val(evaImagePath)
+
+				if(evaComment != "" || evaImagePath !="")
+					$('input[name="eva_comment'+$("#studentId").val()+'&'+$("#cmcId").val()+'"]').parent().parent().parent().find(".fa-plus-circle").css("color","red");
+				else
+					$('input[name="eva_comment'+$("#studentId").val()+'&'+$("#cmcId").val()+'"]').parent().parent().parent().find(".fa-plus-circle").css("color","");
+
 				$("#commentModal").modal('hide');
 			});
 
 			$("#saveEvaluationForm").click(function(){
+				$(this).prop('disabled', true);
 				var evaType = $(this).data("evatype");
 
 				$('#evaluationFormTable tr').each(function () {
@@ -632,7 +736,7 @@ if (isset($_POST["evaluationId"])) {
 					if(studentId == undefined){
 						return true;	// Skip those empty rows.
 					}
-					
+
 					$(this).find('td.cmcColumn').each (function() {
 						var evaSubId = $(this).find('input[name="evaSubId"]').val();
 						var evaRate = $(this).find('input[name="evaRate"]').val();
@@ -640,6 +744,7 @@ if (isset($_POST["evaluationId"])) {
 
 						jQuery.ajax({
 							type: "POST",
+							async: false,
 							url: "../pages/includes/update_evaluation_sub.php",
 							data: {
 								id: evaSubId,
@@ -648,6 +753,7 @@ if (isset($_POST["evaluationId"])) {
 								evaComment: evaComment
 							},
 							success: function(data, textStatus, xhr) {
+								console.log(data);
 							}
 						});
 					});

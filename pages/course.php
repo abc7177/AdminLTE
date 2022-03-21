@@ -80,7 +80,13 @@
 						</div>
 						<div class="col-sm-6">
 							<ol class="breadcrumb float-sm-right">
-								<li class="breadcrumb-item"><a href="../index.php">Home</a></li>
+                                <?php
+                                    if(isset($_GET["asStudent"])){
+                                        echo '<li class="breadcrumb-item"><a href="../index.php?asStudent='.$_GET["asStudent"].'">Home</a></li>';
+                                    } else {
+                                        echo '<li class="breadcrumb-item"><a href="../index.php">Home</a></li>';
+                                    }
+                                ?>
 								<li class="breadcrumb-item active">Course</li>
 							</ol>
 						</div>
@@ -96,7 +102,10 @@
                             <div class="card">
                                 <div class="card-header">
                                     <h3 class="card-title">Datatable of Course</h3>
-                                    <h3 class="card-title float-sm-right" ><button type="button" class="btn-sm btn-primary btn-block" id="addNewCourse" ><i class="fa fa-folder-plus"></i>&nbsp;&nbsp;&nbsp;Add New Course</button></h3>
+                                    <?php
+                                    if($_SESSION["itac_admin"] && !isset($_GET["asStudent"]) && !isset($_GET["asTutor"]))
+                                        echo '<h3 class="card-title float-sm-right" ><button type="button" class="btn-sm btn-primary btn-block" id="addNewCourse" ><i class="fa fa-folder-plus"></i>&nbsp;&nbsp;&nbsp;Add New Course</button></h3>';
+                                    ?>
                                 </div>
                                 <div class="card-body">
                                     <table id="courseTable" class="table table-bordered table-striped">
@@ -105,14 +114,37 @@
                                                 <th>No.</th>
                                                 <th>Course Code</th>
                                                 <th>Course Name</th>
-                                                <th>Total Students</th>
+
+                                                <?php
+                                                if(!$_SESSION["itac_admin"]){
+                                                    echo '<th>Group</th>';
+                                                }
+                                                ?>
+
                                                 <th>Status</th>
-                                                <th style="text-align: center;">Action</th>
+
+                                                <?php
+                                                if($_SESSION["itac_admin"] && !isset($_GET["asStudent"]) && !isset($_GET["asTutor"])){
+                                                    echo '<th style="text-align: center;">Action</th>';
+                                                }
+                                                ?>
                                             </tr>
                                         </thead>
                                         <tbody>
                                             <?php
-                                            $query = "SELECT * FROM course";
+
+                                            if($_SESSION["itac_admin"] && !isset($_GET["asStudent"])){
+                                                $query = "SELECT * FROM course";
+                                            } else {
+                                                if(isset($_GET["asStudent"])){
+                                                    $query = "SELECT * FROM course LEFT JOIN student_course ON course.course_id = student_course.course_id 
+                                                    LEFT JOIN course_group ON student_course.course_group_id = course_group.group_id WHERE student_course.account_id ='".$_SESSION["itac_user_id2"]."'";
+                                                } else {
+                                                    $query = "SELECT * FROM course LEFT JOIN student_course ON course.course_id = student_course.course_id 
+                                                    LEFT JOIN course_group ON student_course.course_group_id = course_group.group_id WHERE student_course.account_id ='".$_SESSION["itac_user_id"]."'";
+                                                }                                                
+                                            }
+                                            //echo $query; echo $_SESSION["itac_account_level"];
                                             $result = mysqli_query($con,$query);
                                             $counter = 1;
                                             while($row = mysqli_fetch_assoc($result)){
@@ -120,7 +152,10 @@
                                                     echo '<td>'.$counter.'</td>';
                                                     echo '<td>'.$row["course_code"].'</td>';
                                                     echo '<td>'.$row["course_name"].'</td>';
-                                                    echo '<td>'.$row["course_name"].'</td>';
+
+                                                if(!$_SESSION["itac_admin"]){
+                                                    echo '<td>'.$row["group_name"].'</td>';
+                                                }
 
                                                 if($row["course_status"] == 'Closed')
                                                     echo '<td class="text-red">';
@@ -128,10 +163,13 @@
                                                     echo '<td class="text-green">';
                                                         echo $row["course_status"];
                                                     echo '</td>';
-                                                    echo '<td style="text-align: center;">';
-                                                        echo '<button type="button" id="deleteCourse" style="margin:1px 3px;" class="btn btn-md btn-danger" data-course_id="'.$row["course_id"].'"><i class="fa fa-trash-alt"></i></button>';
-                                                        echo '<button type="button" id="editCourse" style="margin:1px 3px;" class="btn btn-md btn-info" data-course_id="'.$row["course_id"].'"><i class="fa fa-edit"></i></button>';
-                                                    echo '</td>';
+
+                                                    if($_SESSION["itac_admin"] && !isset($_GET["asStudent"]) && !isset($_GET["asTutor"])){
+                                                        echo '<td style="text-align: center;">';
+                                                            echo '<button type="button" style="margin:1px 3px;" class="btn btn-md btn-danger deleteCourse" data-course_id="'.$row["course_id"].'"><i class="fa fa-trash-alt"></i></button>';
+                                                            echo '<button type="button" style="margin:1px 3px;" class="btn btn-md btn-info editCourse" data-course_id="'.$row["course_id"].'"><i class="fa fa-edit"></i></button>';
+                                                        echo '</td>';
+                                                    }
                                                 echo '</tr>';
                                                 $counter++;
                                             }
@@ -222,25 +260,30 @@
 
         $(function () {
             $("#courseTable").DataTable({
-            "responsive": true, "lengthChange": false, "autoWidth": false,
+            "responsive": false, 
+            "lengthChange": false, 
+            "autoWidth": false,
+            "initComplete": function (settings, json) {  
+                $("#courseTable").wrap("<div style='overflow:auto; width:100%;position:relative;'></div>");            
+            },
             "buttons": ["copy", "csv", "excel", "pdf", "print", "colvis"]
             }).buttons().container().appendTo('#courseTable_wrapper .col-md-6:eq(0)');
 
-            $('[id="deleteCourse"]').click(function() {
-					var course_id = $(this).data('course_id');
-                    $("#course_id").val( course_id );
-					$("#deleteModal").modal();
+            $("#courseTable").on("click",".deleteCourse", function () {
+                var course_id = $(this).data('course_id');
+                $("#course_id").val( course_id );
+                $("#deleteModal").modal();
 			});
 
-            $('[id="editCourse"]').click(function() {
-					var course_id = $(this).data('course_id');
-					var url = "../pages/course_edit.php?id="+course_id;
-					window.location.href = url;
+            $("#courseTable").on("click",".editCourse", function () {
+                var course_id = $(this).data('course_id');
+                var url = "../pages/course_edit.php?id="+course_id;
+                window.location.href = url;
 			});
 
             $('[id="addNewCourse"]').click(function() {
-					var url = "../pages/course_add.php";
-					window.location.href = url;
+                var url = "../pages/course_add.php";
+                window.location.href = url;
 			});
                 
         });

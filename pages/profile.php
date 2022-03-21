@@ -17,28 +17,54 @@
 			if($_FILES['account_photo']['name'] != ""){
 				$filename = $_FILES['account_photo']['name'];
 				$valid_ext = array('png','jpeg','jpg');
-				$location = "../dist/img/".$filename; 
+				
 
-				// file extension
-				$file_extension = pathinfo($location, PATHINFO_EXTENSION);
-				$file_extension = strtolower($file_extension);
+        if(is_uploaded_file($_FILES['account_photo']['tmp_name'])){
+          $ext = pathinfo($_FILES['account_photo']['name'] , PATHINFO_EXTENSION);
+          $filename = pathinfo($_FILES['account_photo']['name'] , PATHINFO_FILENAME);
+          $filepath = time()."_".$_FILES['account_photo']['name'];
+          $ext = strtolower($ext);
+          if($ext == "jpg" || $ext == "jpeg" || $ext == "png"){	
+            $location = "/dist/img/".$filepath;
 
-				// Check extension
-				if(in_array($file_extension,$valid_ext)){
-					// Compress Image
-					compressImage($_FILES['account_photo']['tmp_name'], $location, 60);
-					$q = "UPDATE account_detail SET ad_image_path = '".$location."', ad_image_name = '".$filename."' WHERE account_id = '".$_GET["id"]."'";
-					$r = mysqli_query($con,$q);
-          //echo $q;
-				}else{
-					echo "Invalid file type.";
-				}
+        
+            move_uploaded_file($_FILES['account_photo']['tmp_name'], "../dist/img/".$filepath);
+
+            // compressImage($_FILES['account_photo']['tmp_name'], $location, 60);
+            $q = "UPDATE account_detail SET ad_image_path = '".$location."', ad_image_name = '".$filename."' WHERE account_id = '".$_GET["id"]."'";
+            $r = mysqli_query($con,$q);
+          }
+        }
+
+				// // file extension
+				// $file_extension = pathinfo($location, PATHINFO_EXTENSION);
+				// $file_extension = strtolower($file_extension);
+
+				// // Check extension
+				// if(in_array($file_extension,$valid_ext)){
+				// 	// Compress Image
+				// 	compressImage($_FILES['account_photo']['tmp_name'], $location, 60);
+				// 	$q = "UPDATE account_detail SET ad_image_path = '".$location."', ad_image_name = '".$filename."' WHERE account_id = '".$_GET["id"]."'";
+				// 	$r = mysqli_query($con,$q);
+        //   //echo $q;
+				// }else{
+				// 	echo "Invalid file type.";
+				// }
 			}
 
-      $_SESSION["itac_ad_image_path"] = $location;
+      if(isset($_GET["asStudent"])){
+        $_SESSION["itac_ad_image_path2"] = $location;
+        echo "<script>window.location='profile.php?asStudent=".$_GET["asStudent"]."&id=".mysqli_real_escape_string($con,$_GET["id"])."'</script>";	
+      } else if(isset($_GET["asTutor"])){
+        $_SESSION["itac_ad_image_path3"] = $location;
+        echo "<script>window.location='profile.php?asTutor=".$_GET["asTutor"]."&id=".mysqli_real_escape_string($con,$_GET["id"])."'</script>";	
+      } else {
+        $_SESSION["itac_ad_image_path"] = $location;
+        echo "<script>window.location='profile.php?id=".mysqli_real_escape_string($con,$_GET["id"])."'</script>";	
+      }
 
       echo '<script>localStorage.setItem("Updated",1)</script>';	// Successful updated flag.
-      echo "<script>window.location='profile.php?id=".mysqli_real_escape_string($con,$_GET["id"])."'</script>";	
+      
       exit;
 		}
 
@@ -58,7 +84,13 @@
       $result = mysqli_query($con, $query);
        //echo $query;
        echo '<script>localStorage.setItem("Updated",1)</script>';	// Successful updated flag.
-       echo "<script>window.location='profile.php?id=".mysqli_real_escape_string($con,$_GET["id"])."'</script>";	
+
+       if(isset($_GET["asStudent"])){
+        echo "<script>window.location='profile.php?asStudent=".$_GET["asStudent"]."&id=".mysqli_real_escape_string($con,$_GET["id"])."'</script>";	
+       } else {
+        echo "<script>window.location='profile.php?id=".mysqli_real_escape_string($con,$_GET["id"])."'</script>";	
+       }
+       
        exit;
     }
 
@@ -87,7 +119,12 @@
       
       //echo $query;
       echo '<script>localStorage.setItem("Updated",1)</script>';	// Successful updated flag.
-      echo "<script>window.location='profile.php?id=".mysqli_real_escape_string($con,$_GET["id"])."'</script>";	
+
+      if(isset($_GET["asStudent"])){
+        echo "<script>window.location='profile.php?asStudent=".$_GET["asStudent"]."&id=".mysqli_real_escape_string($con,$_GET["id"])."'</script>";	
+      } else {
+        echo "<script>window.location='profile.php?id=".mysqli_real_escape_string($con,$_GET["id"])."'</script>";	
+      }
       exit;
     }
 
@@ -151,9 +188,9 @@
   <!-- /.Main Sidebar Container -->
 
   <!-- Preloader -->
-  <div class="preloader flex-column justify-content-center align-items-center">
+  <!-- <div class="preloader flex-column justify-content-center align-items-center">
       <img class="animation__shake" src="../dist/img/logo-200x200.png" alt="AdminLTELogo" height="100" width="100">
-  </div>
+  </div> -->
 
   <!-- Content Wrapper. Contains page content -->
   <div class="content-wrapper">
@@ -218,10 +255,24 @@
               <div class="card-body box-profile">
                 <div class="text-center">
                   <?php
-                  if($row["ad_image_path"] != ""){
-                    echo '<img class="profile-user-img img-fluid img-circle" src="'.$row["ad_image_path"].'" alt="User profile picture" style="width:150px; height: 150px;">';
+                  if(isset($_GET["asStudent"])){
+                    if($row["ad_image_path"] != ""){
+                      echo '<img class="profile-user-img img-fluid img-circle" src="'.$_SESSION["itac_path_configuration2"].$row["ad_image_path"].'" alt="User profile picture" style="width:150px; height: 150px;">';
+                    } else {
+                      echo '<img class="profile-user-img img-fluid img-circle" src="../dist/img/avatar2.png" alt="User profile picture">';
+                    }
+                  } else if(isset($_GET["asTutor"])){
+                    if($row["ad_image_path"] != ""){
+                      echo '<img class="profile-user-img img-fluid img-circle" src="'.$_SESSION["itac_path_configuration3"].$row["ad_image_path"].'" alt="User profile picture" style="width:150px; height: 150px;">';
+                    } else {
+                      echo '<img class="profile-user-img img-fluid img-circle" src="../dist/img/avatar2.png" alt="User profile picture">';
+                    }
                   } else {
-                    echo '<img class="profile-user-img img-fluid img-circle" src="../dist/img/avatar2.png" alt="User profile picture">';
+                    if($row["ad_image_path"] != ""){
+                      echo '<img class="profile-user-img img-fluid img-circle" src="'.$_SESSION["itac_path_configuration"].$row["ad_image_path"].'" alt="User profile picture" style="width:150px; height: 150px;">';
+                    } else {
+                      echo '<img class="profile-user-img img-fluid img-circle" src="../dist/img/avatar2.png" alt="User profile picture">';
+                    }
                   }
                   ?>
                  
@@ -242,14 +293,14 @@
 
                 <ul class="list-group list-group-unbordered mb-3">
                   <li class="list-group-item">
-                    <b>Courses</b> <a class="float-right"><?php echo $row["sc_id"]==0?"No Course":$row["sc_id"];?></a>
+                    <b>Courses</b> <a class="float-right" href="course.php"><?php echo $row["sc_id"]==0?"No Course":$row["sc_id"];?></a>
                   </li>
                   <li class="list-group-item">
-                    <b>Attendance Rate</b> <a class="float-right"><?php echo $row["attendance_rate"]==''?"No Rate":$row["attendance_rate"]."%";?></a>
+                    <b>Attendance Rate</b> <a class="float-right" href="attendance.php"><?php echo $row["attendance_rate"]==''?"No Rate":$row["attendance_rate"]."%";?></a>
                   </li>
-                  <li class="list-group-item">
-                    <b>Average Score</b> <a class="float-right"><?php echo $row["eva_rate"]==''?"No Score":$row["eva_rate"];?></a>
-                  </li>
+                  <!-- <li class="list-group-item">
+                    <b>Average Score</b> <a class="float-right" href="evaluation.php?eva_type=semester"><?php //echo $row["eva_rate"]==''?"No Score":$row["eva_rate"];?></a>
+                  </li> -->
                 </ul>
               </div>
               <!-- /.card-body -->
@@ -351,79 +402,149 @@
                      
 
                       <?php
-                      $query = "SELECT account.account_name, course_code, course_name, attendance_sub_status, attendance.created  FROM attendance
-                      LEFT JOIN attendance_sub ON attendance.attendance_id = attendance_sub.attendance_id
+
+                      if(isset($_GET["asStudent"])){
+                        $accountId = $_GET["asStudent"];
+                      } else {
+                        $accountId = $_SESSION["itac_user_id"];
+                      }
+
+                      $query = "SELECT evaluation_id AS '1', account_id AS '2', \"Daily\" as '3', 'EVALUATION' AS '4', created AS '5' FROM evaluation_sub WHERE account_id='".$accountId."' group by evaluation_id
+                      union all
+                      SELECT evaluation_id AS '1', account_id AS '2', \"Semester\" as '3', 'EVALUATION' AS '4', created AS '5' FROM evaluation_sem_sub WHERE account_id='".$accountId."' group by evaluation_id
+                      union all
+                      SELECT evaluation_id AS '1', account_id AS '2', \"Final\" as '3', 'EVALUATION' AS '4', created AS '5'FROM evaluation_final_sub WHERE account_id='".$accountId."' group by evaluation_id
+                      union all
+                      SELECT account.account_name AS '1', course_code AS '2', course_name AS '3', attendance_sub_status AS '4', attendance.created '5' FROM attendance 
+                      LEFT JOIN attendance_sub ON attendance.attendance_id = attendance_sub.attendance_id 
                       LEFT JOIN course ON attendance.course_id = course.course_id 
-                      LEFT JOIN account ON attendance.account_id = account.account_id
-                      WHERE attendance_sub.account_id ='".$_SESSION["itac_user_id"]."' ORDER BY created DESC";
+                      LEFT JOIN account ON attendance.account_id = account.account_id WHERE attendance_sub.account_id ='".$accountId."' ORDER BY 5 DESC";
 
                       $result = mysqli_query($con,$query);
+                      //echo $query;
                       $datetime = '1';
                       while($rowAttendance = mysqli_fetch_assoc($result)) {
-                        if($datetime != date('d/m/Y', strtotime($rowAttendance["created"]))){
+                        if($datetime != date('d/m/Y', strtotime($rowAttendance["5"]))){
                           echo '<div class="time-label">';
                             echo '<span class="bg-info">';                          
 
-                            if($rowAttendance["created"] != "0000-00-00" && $rowAttendance["created"] != ""){
-                              $datetime = date('d/m/Y', strtotime($rowAttendance["created"]));
+                            if($rowAttendance["5"] != "0000-00-00" && $rowAttendance["5"] != ""){
+                              $datetime = date('d/m/Y', strtotime($rowAttendance["5"]));
                             }
-                            echo date('d M. Y', strtotime($rowAttendance["created"])); 
+                            echo date('d M. Y', strtotime($rowAttendance["5"])); 
                             echo '</span>';
                           echo '</div>';
                         }
                         
-                        if($rowAttendance["attendance_sub_status"] == "Present"){
-                          echo "<div>";
-                            echo '<i class="fas fa-user-check bg-success"></i>';
-                            echo '<div class="timeline-item">';
-                              echo '<span class="time"><i class="far fa-clock"></i>&nbsp;'.date('H:i A', strtotime($rowAttendance["created"])).' </span>';
-    
-                              echo '<h3 class="timeline-header"><a href="#">You</a> were present at course: '.$rowAttendance["course_code"].'</h3>';
-    
-                              echo '<div class="timeline-body">';
-                                echo "Attendance were taken by tutor: ".$rowAttendance["account_name"]."";
-                              echo '</div>';                
+                        if($rowAttendance["4"] == "EVALUATION"){
+
+                          if($rowAttendance["3"] == "Daily"){
+                            echo "<div>";
+                              echo '<i class="fas fas fa-percent bg-yellow"></i>';
+                              echo '<div class="timeline-item">';
+                                echo '<span class="time"><i class="far fa-clock"></i>&nbsp;'.date('H:i A', strtotime($rowAttendance["5"])).' </span>';
+      
+                                echo '<h3 class="timeline-header"><a href="#">You</a> attended a '.$rowAttendance["3"].' Evaluation</h3>';
+      
+                                echo '<div class="timeline-body">';
+                                if(isset($_GET["asStudent"])){
+                                  echo "More info of the result : <a href='evaluation_edit.php?asStudent=".$_GET["asStudent"]."&id=".$rowAttendance["1"]."&eva_type=daily&viewType=readonly'>Click Here</a>";
+                                } else {
+                                  echo "More info of the result : <a href='evaluation_edit.php?id=".$rowAttendance["1"]."&eva_type=daily&viewType=readonly'>Click Here</a>";
+                                }
+                                echo '</div>';                
+                              echo '</div>';
                             echo '</div>';
+                          } else if($rowAttendance["3"] == "Semester"){
+                            echo "<div>";
+                              echo '<i class="fas fas fa-percent bg-orange"></i>';
+                              echo '<div class="timeline-item">';
+                                echo '<span class="time"><i class="far fa-clock"></i>&nbsp;'.date('H:i A', strtotime($rowAttendance["5"])).' </span>';
+      
+                                echo '<h3 class="timeline-header"><a href="#">You</a> attended a '.$rowAttendance["3"].' Evaluation</h3>';
+      
+                                echo '<div class="timeline-body">';
+                                if(isset($_GET["asStudent"])){
+                                  echo "More info of the result : <a href='evaluation_sem_edit.php?asStudent=".$_GET["asStudent"]."&id=".$rowAttendance["1"]."&eva_type=semester&viewType=readonly'>Click Here</a>";
+                                } else {
+                                  echo "More info of the result : <a href='evaluation_sem_edit.php?id=".$rowAttendance["1"]."&eva_type=semester&viewType=readonly'>Click Here</a>";
+                                }
+                                echo '</div>';                
+                              echo '</div>';
                           echo '</div>';
-                        } else if($rowAttendance["attendance_sub_status"] == "Absent"){
-                          echo "<div>";
-                            echo '<i class="fas fa-user-slash bg-danger"></i>';
-                            echo '<div class="timeline-item">';
-                              echo '<span class="time"><i class="far fa-clock"></i>&nbsp;'.date('H:i A', strtotime($rowAttendance["created"])).' </span>';
-    
-                              echo '<h3 class="timeline-header"><a href="#">You</a> were absent at course: '.$rowAttendance["course_code"].'</h3>';
-    
-                              echo '<div class="timeline-body">';
-                                echo "Attendance were taken by tutor: ".$rowAttendance["account_name"]."";
-                              echo '</div>';                
+                          } else if($rowAttendance["3"] == "Final"){
+                            echo "<div>";
+                              echo '<i class="fas fas fa-percent bg-red"></i>';
+                              echo '<div class="timeline-item">';
+                                echo '<span class="time"><i class="far fa-clock"></i>&nbsp;'.date('H:i A', strtotime($rowAttendance["5"])).' </span>';
+      
+                                echo '<h3 class="timeline-header"><a href="#">You</a> attended a '.$rowAttendance["3"].' Evaluation</h3>';
+      
+                                echo '<div class="timeline-body">';
+                                if(isset($_GET["asStudent"])){
+                                  echo "More info of the result : <a href='evaluation_final_edit.php?asStudent=".$_GET["asStudent"]."&id=".$rowAttendance["1"]."&eva_type=final&viewType=readonly'>Click Here</a>";
+                                } else {
+                                  echo "More info of the result : <a href='evaluation_final_edit.php?id=".$rowAttendance["1"]."&eva_type=final&viewType=readonly'>Click Here</a>";
+                                }
+                                echo '</div>';                
+                              echo '</div>';
+                          echo '</div>';
+                          }
+                        } else {
+                          
+                          if($rowAttendance["4"] == "Present"){
+                            echo "<div>";
+                              echo '<i class="fas fa-user-check bg-success"></i>';
+                              echo '<div class="timeline-item">';
+                                echo '<span class="time"><i class="far fa-clock"></i>&nbsp;'.date('H:i A', strtotime($rowAttendance["5"])).' </span>';
+      
+                                echo '<h3 class="timeline-header"><a href="#">You</a> were present at course: '.$rowAttendance["2"].'</h3>';
+      
+                                echo '<div class="timeline-body">';
+                                  echo "Attendance were taken by tutor: ".$rowAttendance["1"]."";
+                                echo '</div>';                
+                              echo '</div>';
                             echo '</div>';
-                          echo '</div>';
-                        } else if($rowAttendance["attendance_sub_status"] == "Late"){
-                          echo "<div>";
-                            echo '<i class="fas fa-user-clock bg-warning"></i>';
-                            echo '<div class="timeline-item">';
-                              echo '<span class="time"><i class="far fa-clock"></i>&nbsp;'.date('H:i A', strtotime($rowAttendance["created"])).' </span>';
-    
-                              echo '<h3 class="timeline-header"><a href="#">You</a> were late at course: '.$rowAttendance["course_code"].'</h3>';
-    
-                              echo '<div class="timeline-body">';
-                                echo "Attendance were taken by tutor: ".$rowAttendance["account_name"]."";
-                              echo '</div>';                
+                          } else if($rowAttendance["4"] == "Absent"){
+                            echo "<div>";
+                              echo '<i class="fas fa-user-slash bg-danger"></i>';
+                              echo '<div class="timeline-item">';
+                                echo '<span class="time"><i class="far fa-clock"></i>&nbsp;'.date('H:i A', strtotime($rowAttendance["5"])).' </span>';
+      
+                                echo '<h3 class="timeline-header"><a href="#">You</a> were absent at course: '.$rowAttendance["2"].'</h3>';
+      
+                                echo '<div class="timeline-body">';
+                                  echo "Attendance were taken by tutor: ".$rowAttendance["1"]."";
+                                echo '</div>';                
+                              echo '</div>';
                             echo '</div>';
-                          echo '</div>';
-                        } else if($rowAttendance["attendance_sub_status"] == "MC / Leave"){
-                          echo "<div>";
-                            echo '<i class="fas fa-hiking bg-info"></i>';
-                            echo '<div class="timeline-item">';
-                              echo '<span class="time"><i class="far fa-clock"></i>&nbsp;'.date('H:i A', strtotime($rowAttendance["created"])).' </span>';
-    
-                              echo '<h3 class="timeline-header"><a href="#">You</a> were on MC/leave at course: '.$rowAttendance["course_code"].'</h3>';
-    
-                              echo '<div class="timeline-body">';
-                                echo "Attendance were taken by tutor: ".$rowAttendance["account_name"]."";
-                              echo '</div>';                
+                          } else if($rowAttendance["4"] == "Late"){
+                            echo "<div>";
+                              echo '<i class="fas fa-user-clock bg-warning"></i>';
+                              echo '<div class="timeline-item">';
+                                echo '<span class="time"><i class="far fa-clock"></i>&nbsp;'.date('H:i A', strtotime($rowAttendance["5"])).' </span>';
+      
+                                echo '<h3 class="timeline-header"><a href="#">You</a> were late at course: '.$rowAttendance["2"].'</h3>';
+      
+                                echo '<div class="timeline-body">';
+                                  echo "Attendance were taken by tutor: ".$rowAttendance["1"]."";
+                                echo '</div>';                
+                              echo '</div>';
                             echo '</div>';
-                          echo '</div>';
+                          } else if($rowAttendance["4"] == "MC / Leave"){
+                            echo "<div>";
+                              echo '<i class="fas fa-hiking bg-info"></i>';
+                              echo '<div class="timeline-item">';
+                                echo '<span class="time"><i class="far fa-clock"></i>&nbsp;'.date('H:i A', strtotime($rowAttendance["5"])).' </span>';
+      
+                                echo '<h3 class="timeline-header"><a href="#">You</a> were on MC/leave at course: '.$rowAttendance["2"].'</h3>';
+      
+                                echo '<div class="timeline-body">';
+                                  echo "Attendance were taken by tutor: ".$rowAttendance["1"]."";
+                                echo '</div>';                
+                              echo '</div>';
+                            echo '</div>';
+                          }
                         }
                       }
                       ?>
@@ -435,7 +556,7 @@
                           
                           $datetime = '';
                           if($row["created"] != "0000-00-00" && $row["created"] != ""){
-                            //$datetime = date('d/m/Y H:i A', strtotime($row["created"]));
+                            //$datetime = date('d/m/Y H:i A', strtotime($row["5"]));
                           }
                           echo date('d M. Y', strtotime($row["created"])); 
                           ?>

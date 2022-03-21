@@ -24,7 +24,7 @@ if (!(isset($_SESSION["itac_user_id"]))) {
 if (isset($_POST["attendanceId"])) {
 
 	$query = "UPDATE attendance SET  
-				attendance_date = STR_TO_DATE('" . mysqli_real_escape_string($con, $_POST["attendanceDate"]) . "', '%d/%m/%Y'), 
+				attendance_date = '" . mysqli_real_escape_string($con, $_POST["attendanceDate"]) . "', 
 				attendance_remark = '" . mysqli_real_escape_string($con, $_POST["attendanceDescription"]) . "'
 				WHERE attendance_id = '" . mysqli_real_escape_string($con, $_POST["attendanceId"]) . "'";
 	$result = mysqli_query($con, $query);
@@ -80,9 +80,17 @@ if (isset($_POST["attendanceId"])) {
 						</div>
 						<div class="col-sm-6">
 							<ol class="breadcrumb float-sm-right">
-								<li class="breadcrumb-item"><a href="../index.php">Home</a></li>
-								<li class="breadcrumb-item"><a href="attendance.php">Attendance</a></li>
-								<li class="breadcrumb-item active">Attendance Marking</li>
+								<?php
+								if(isset($_GET["viewType"]) == "readonly"){
+									echo '<li class="breadcrumb-item"><a href="../index.php?asTutor='.$_GET["asTutor"].'">Home</a></li>';
+									echo '<li class="breadcrumb-item"><a href="attendance.php?asTutor='.$_GET["asTutor"].'">Attendance</a></li>';
+									echo '<li class="breadcrumb-item active">Attendance Marking</li>';
+								} else {
+									echo '<li class="breadcrumb-item"><a href="../index.php">Home</a></li>';
+									echo '<li class="breadcrumb-item"><a href="attendance.php">Attendance</a></li>';
+									echo '<li class="breadcrumb-item active">Attendance Marking</li>';
+								}
+								?>
 							</ol>
 						</div>
 					</div>
@@ -92,7 +100,7 @@ if (isset($_POST["attendanceId"])) {
 			<section class="content">
 				<form name="add_attendance" id="add_attendance" class="col-lg-12" method="POST">
 					<div class="row">
-						<div class="col-md-4">
+						<div class="col-md-12">
 							<div class="card card-primary">
 								<div class="card-header">
 									<h3 class="card-title">General</h3>
@@ -139,19 +147,19 @@ if (isset($_POST["attendanceId"])) {
 											?>
 										</select>		
 									</div>
-									<div class="form-group">
+									<!-- <div class="form-group">
 										<label for="inputName">Group Name</label>
 										<select name='attendanceCourseGroup' id='attendanceCourseGroup' class='form-control form-control-sm'></select>
-									</div>
+									</div> -->
 									
 									<div class="form-group" style="margin-bottom:0px;">
 										<label for="attendanceDate">Date</label>
 										<div class="row">
 											<div class="form-group col-lg-6">
 												<div class="input-group">
-													<input type="text" name="attendanceDate" id="attendanceDate" class="form-control" data-inputmask-alias="datetime" data-inputmask-inputformat="dd/mm/yyyy" data-mask placeholder="Date" value="<?php echo date('d/m/Y', strtotime($row0["attendance_date"])) ?>">
+													<input type="date" name="attendanceDate" id="attendanceDate" class="form-control" value="<?php echo date('Y-m-d', strtotime($row0["attendance_date"])) ?>">
 													<div class="input-group-prepend">
-														<span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+														<!-- <span class="input-group-text"><i class="far fa-calendar-alt"></i></span> -->
 													</div>
 												</div>
 											</div>
@@ -161,7 +169,7 @@ if (isset($_POST["attendanceId"])) {
 										<label for="attendanceDescription">Description / Remarks</label>
 										<textarea name="attendanceDescription" id="attendanceDescription" class="form-control" rows="4"><?php echo $row0["attendance_remark"]; ?></textarea>
 									</div>
-									<div class="form-group">
+									<!-- <div class="form-group">
 										<div class="row">
 											<div class="form-group col-lg-12">
 												<div class="input-group">
@@ -169,13 +177,13 @@ if (isset($_POST["attendanceId"])) {
 												</div>
 											</div>
 										</div>
-									</div>
+									</div> -->
 								</div>
 								<!-- /.card-body -->
 							</div>
 							<!-- /.card -->
 						</div>
-						<div class="col-md-8">
+						<div class="col-md-12">
 							
 							<div class="card card-secondary">
 								<div class="card-header">
@@ -190,78 +198,88 @@ if (isset($_POST["attendanceId"])) {
 								<div class="card-body">
 									<div class="row">
 										<div class="col-12">
+											<?php
+												$query0 = "SELECT course_group.* FROM attendance_sub LEFT JOIN course_group ON attendance_sub.group_id = course_group.group_id 
+														WHERE attendance_sub.attendance_id = '".mysqli_real_escape_string($con,$_GET["id"])."' group by attendance_sub.group_id";
+												$result0 = mysqli_query($con, $query0);
+												//echo $query0;
+												while($row0 = mysqli_fetch_assoc($result0)){	
+											?>
 											<div class="card">
 											<div class="card-header bg-success">
-												Enrolled Student Information
+												Student List: <?php echo $row0["group_name"];?>
 											</div>
-											<!-- ./card-header -->
+										
 											<div class="card-body p-0">
-												<table id="enrolledStudentTable" class="table table-hover">
-												<tbody>
-													<tr id='enrolledCourseHeader'>
-														<td style='width:20px; text-align:center;'>No.</td>
-														<td>Student Name</td>
-														<td style='width:100px; text-align:center;'>Present</td><td style='width:100px; text-align:center;'>Late</td>
-														<td style='width:100px; text-align:center;'>MC / Leave</td><td style='width:100px; text-align:center;'>Absent</td>
-													</tr>
+												<div style='overflow:auto; width:100%;position:relative;'>
+													<table id="enrolledStudentTable" class="table table-hover">
+													<tbody>
+														<tr id='enrolledCourseHeader'>
+															<td style='width:20px; text-align:center;'>No.</td>
+															<td>Student Name</td>
+															<td style='width:100px; text-align:center;'>Present</td><td style='width:100px; text-align:center;'>Late</td>
+															<td style='width:100px; text-align:center;'>MC / Leave</td><td style='width:100px; text-align:center;'>Absent</td>
+														</tr>
 
-													<?php
-													$counter = 0;
-													$query1 = "SELECT * FROM attendance_sub LEFT JOIN account ON attendance_sub.account_id = account.account_id 
-													WHERE attendance_sub.attendance_id = '".mysqli_real_escape_string($con,$_GET["id"])."'";
-													$result1 = mysqli_query($con, $query1);
+														<?php
+														$counter = 0;
+														$query1 = "SELECT * FROM attendance_sub LEFT JOIN account ON attendance_sub.account_id = account.account_id 
+														WHERE attendance_sub.attendance_id = '".mysqli_real_escape_string($con,$_GET["id"])."' AND attendance_sub.group_id= '".$row0["group_id"]."'";
+														$result1 = mysqli_query($con, $query1);
 
-													while($row1 = mysqli_fetch_assoc($result1)){
-														$counter++;
-														echo "<tr><td style='width:20px; text-align:center;'>".$counter."<input type='hidden' name='studentId' class='form-control form-control-sm studentId' value='".$row1["account_id"]."'></div></td>";
-														echo "<td><div class='col-sm-6'>".$row1["account_name"]."</div></td>";
-														echo "<td style='width:100px; text-align:center;'>";
-														echo "<div data-toggle='buttons'><label class='btn ";
-															if($row1["attendance_sub_status"] == 'Present'){echo 'green-icon';}
-														echo "'>";
-														echo "<input type='radio' class='studentAttendance' name='options' style='display:none;' value='Present' ";
-															if($row1["attendance_sub_status"] == 'Present'){echo 'checked';}
-														echo "> <i class='fas fa-check'></i></label></div></td>";
-														echo "<td style='width:100px; text-align:center;'><div data-toggle='buttons'><label class='btn ";
-															if($row1["attendance_sub_status"] == 'Late'){echo 'green-icon';}
-														echo "'>";
-														echo "<input type='radio' class='studentAttendance' name='options' style='display:none;' value='Late' ";
-															if($row1["attendance_sub_status"] == 'Late'){echo 'checked';}
-														echo "> <i class='fas fa-check'></i></label></div></td>";
-														echo "<td style='width:100px; text-align:center;'><div data-toggle='buttons'><label class='btn ";
-															if($row1["attendance_sub_status"] == 'MC / Leave'){echo 'green-icon';}
-														echo "'>";
-														echo "<input type='radio' class='studentAttendance' name='options' style='display:none;' value='MC / Leave' ";
-															if($row1["attendance_sub_status"] == 'MC / Leave'){echo 'checked';}
-														echo "> <i class='fas fa-check'></i></label></div></td>";
-														echo "<td style='width:100px; text-align:center;'><div data-toggle='buttons'><label class='btn ";
-															if($row1["attendance_sub_status"] == 'Absent'){echo 'green-icon';}
-														echo "'>";
-														echo "<input type='radio' class='studentAttendance' name='options' style='display:none;' value='Absent' ";
-															if($row1["attendance_sub_status"] == 'Absent'){echo 'checked';}
-														echo "> <i class='fas fa-check'></i></label></div></td>";
-														echo "</tr>";
-													}
-													?>
-													
-												</tbody>
-												</table>
+														while($row1 = mysqli_fetch_assoc($result1)){
+															$counter++;
+															echo "<tr><td style='width:20px; text-align:center;'>".$counter."<input type='hidden' name='studentId' class='form-control form-control-sm studentId' value='".$row1["account_id"]."'></div></td>";
+															echo "<td><div class='col-sm-6'>".$row1["account_name"]."</div></td>";
+															echo "<td style='width:100px; text-align:center;'>";
+															echo "<div data-toggle='buttons' class='btn'><label class=' ";
+																if($row1["attendance_sub_status"] == 'Present'){echo 'green-icon';}
+															echo "'>";
+															echo "<input type='radio' class='studentAttendance' name='options' style='display:none;' value='Present' ";
+																if($row1["attendance_sub_status"] == 'Present'){echo 'checked';}
+															echo "> <i class='fas fa-check'></i></label></div></td>";
+															echo "<td style='width:100px; text-align:center;'><div data-toggle='buttons' class='btn'><label class=' ";
+																if($row1["attendance_sub_status"] == 'Late'){echo 'green-icon';}
+															echo "'>";
+															echo "<input type='radio' class='studentAttendance' name='options' style='display:none;' value='Late' ";
+																if($row1["attendance_sub_status"] == 'Late'){echo 'checked';}
+															echo "> <i class='fas fa-check'></i></label></div></td>";
+															echo "<td style='width:100px; text-align:center;'><div data-toggle='buttons' class='btn'><label class=' ";
+																if($row1["attendance_sub_status"] == 'MC / Leave'){echo 'green-icon';}
+															echo "'>";
+															echo "<input type='radio' class='studentAttendance' name='options' style='display:none;' value='MC / Leave' ";
+																if($row1["attendance_sub_status"] == 'MC / Leave'){echo 'checked';}
+															echo "> <i class='fas fa-check'></i></label></div></td>";
+															echo "<td style='width:100px; text-align:center;'><div data-toggle='buttons' class='btn'><label class=' ";
+																if($row1["attendance_sub_status"] == 'Absent'){echo 'green-icon';}
+															echo "'>";
+															echo "<input type='radio' class='studentAttendance' name='options' style='display:none;' value='Absent' ";
+																if($row1["attendance_sub_status"] == 'Absent'){echo 'checked';}
+															echo "> <i class='fas fa-check'></i></label></div></td>";
+															echo "</tr>";
+														}
+														?>
+														
+													</tbody>
+													</table>
+												</div>
+											</div>										
 											</div>
-											<!-- /.card-body -->
-											</div>
-											<!-- /.card -->
+											<?php } ?>										
 										</div>
 										<div class="col-12">
 											<div class="form-group">
 												<div class="row">
 													<div class="form-group col-lg-6">
 														<div class="input-group">
-															<button type="button" class="btn btn-danger btn-block" onclick="window.location='attendance.php'"><i class="fa fa-arrow-left"></i> BACK</button>
+															<button type="button" class="btn btn-danger btn-block" onclick="window.location='attendance.php<?php if(isset($_GET['asTutor'])){ echo '?asTutor='.$_GET['asTutor']; }?>'"><i class="fa fa-arrow-left"></i> BACK</button>
 														</div>
 													</div>
 													<div class="form-group col-lg-6">
 														<div class="input-group">
-															<button type="submit" id="submitAttendanceForm" class="btn btn-primary btn-block">Update Attendance <i class="fa fa-check"></i></button>
+															<button type="submit" id="submitAttendanceForm" class="btn btn-primary btn-block" 
+															<?php if(isset($_GET["viewType"]) == "readonly" || isset($_GET["asTutor"])){ echo "disabled"; }?>
+															>Update Attendance <i class="fa fa-check"></i></button>
 														</div>
 													</div>
 												</div>
@@ -412,7 +430,13 @@ if (isset($_POST["attendanceId"])) {
 		}
 		
 		$(function() {
-			getCourseGroupInfo($('#attendanceCourseId'), $('.attendanceCourseGroup'));
+
+			var currentUrl = window.location.href;
+        	var url = new URL(currentUrl);
+					
+			if(url.searchParams.has("asTutor") == true){
+				$('input, textarea').attr('disabled', true);
+			}
 			
 			$(document).on('change','#attendanceCourseId',function(){
 				valueCurrent = $(this).val();
@@ -425,7 +449,7 @@ if (isset($_POST["attendanceId"])) {
 				}
 			});
 
-			$(document).on('change','.studentAttendance',function(){ 
+			$(document).on('change','.studentAttendance',function(){  //alert("YO");
 				var valueCurrent = $(this).val();
 				var studentId = $(this).closest("tr").find("input[name='studentId']").val();
 				var attendanceId = $("#attendanceId").val();
@@ -451,9 +475,9 @@ if (isset($_POST["attendanceId"])) {
 					return;
 				}
 				
-				$("#attendanceCourseId").prop('disabled', true);
-				$("#attendanceCourseGroup").prop('disabled', true);
-				$("#generateStudentList").prop('disabled', true);
+				//$("#attendanceCourseId").prop('disabled', true);
+				//$("#attendanceCourseGroup").prop('disabled', true);
+				//$("#generateStudentList").prop('disabled', true);
 
 				getEnrolledStudentInfo(courseId, courseGroupId);
 			});

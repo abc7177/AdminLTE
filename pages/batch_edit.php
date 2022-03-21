@@ -202,7 +202,7 @@
 													Student Information
 												</div>
 												<div class="card-body p-0">
-													<table id="enrolledStudentTable" class="table table-borderless">
+													<table id="enrolledStudentTable" class="table table-borderless table-hover">
 														<tbody>
 														<tr id='enrolledCourseHeader'>
 															<td style='width:20px; text-align:center;'>No.</td><td style='width:150px;'>Student Name</td>
@@ -225,7 +225,7 @@
 																echo "<td><div>".$row1["account_name"]."</div></td>";
 																echo "<td><div>".$row1["account_enroll_date"]."</div></td>";
 																echo "<td style='text-align: center;'>";
-																echo "<div data-toggle='buttons'><label class='btn ";
+																echo "<div data-toggle='buttons' class='btn'><label class=' ";
 																
 																if($row1["batch_sub_id"] != "") {
 																	echo "active green-icon";

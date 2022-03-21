@@ -50,18 +50,22 @@
             $query = "UPDATE account SET 
                         account_name = '" . mysqli_real_escape_string($con, $_POST["tutorName"]) . "', 
                         account_ic = '" . mysqli_real_escape_string($con, $_POST["tutorICNumber"]) . "', 
-                        account_dob = STR_TO_DATE('" . mysqli_real_escape_string($con, $_POST["tutorDOB"]) . "', '%d/%m/%Y'), 
+                        account_dob = '" . mysqli_real_escape_string($con, $_POST["tutorDOB"]) . "', 
                         account_email = '" . mysqli_real_escape_string($con, $_POST["tutorEmail"]) . "', 
                         account_phone_no = '" . mysqli_real_escape_string($con, $_POST["tutorPhoneNumber"]) . "', 
                         account_e_name = '" . mysqli_real_escape_string($con, $_POST["tutorEmergencyName"]) . "', 
                         account_e_phone_no = '" . mysqli_real_escape_string($con, $_POST["tutorEmergencyPhone"]) . "', 
                         account_address_line1 = '" . mysqli_real_escape_string($con, $_POST["tutorAddressLine1"]) . "', 
                         account_address_line2 = '" . mysqli_real_escape_string($con, $_POST["tutorAddressLine2"]) . "', 
-                        account_postcode = '" . mysqli_real_escape_string($con, $_POST["tutorPostcode"]) . "', 
-                        account_state = '" . mysqli_real_escape_string($con, $_POST["tutorState"]) . "', 
-                        account_country = '" . mysqli_real_escape_string($con, $_POST["tutorCountry"]) . "', 
-                        account_enroll_date = STR_TO_DATE('" . mysqli_real_escape_string($con, $_POST["tutorEnrollDate"]) . "', '%d/%m/%Y'), 
-                        account_status = '" . $tutorStatus . "', 
+                        account_postcode = '" . mysqli_real_escape_string($con, $_POST["tutorPostcode"]) . "',";
+
+			if(isset($_POST["tutorState"]))
+            	$query .= "account_state = '" . mysqli_real_escape_string($con, $_POST["tutorState"]) . "', ";
+				
+			if(isset($_POST["tutorCountry"]))	
+                $query .= "account_country = '" . mysqli_real_escape_string($con, $_POST["tutorCountry"]) . "', ";
+				$query .= "account_enroll_date = '" . mysqli_real_escape_string($con, $_POST["tutorEnrollDate"]) . "', 
+						account_status = '" . $tutorStatus . "', 
                         account_remark = '" . mysqli_real_escape_string($con, $_POST["tutorDescription"]) . "', 
                         $passwordQuery
                         account_level_id = '2',
@@ -152,9 +156,9 @@
 									<div class="form-group">
 										<label for="inputName">Date Of Birth</label>
 										<div class="input-group">
-											<input type="text" name="tutorDOB" id="tutorDOB" class="form-control" data-inputmask-alias="datetime" data-inputmask-inputformat="dd/mm/yyyy" data-mask value="<?php echo date('d/m/Y', strtotime($row0["account_dob"])) ?>">
+											<input type="date" name="tutorDOB" id="tutorDOB" class="form-control" value="<?php echo date('Y-m-d', strtotime($row0["account_dob"])) ?>">
 											<div class="input-group-prepend">
-												<span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+												<!-- <span class="input-group-text"><i class="far fa-calendar-alt"></i></span> -->
 											</div>
 										</div>
 									</div>
@@ -199,7 +203,7 @@
 												<div class="input-group">
                                                     <select class="form-control" name="tutorState" id="tutorState">
                                                         <?php
-                                                            echo '<option value="" selected disabled>----- State -----</option>';
+                                                            echo '<option value="0" selected disabled>----- State -----</option>';
                                                             $query = "select * from state";
                                                             $result = mysqli_query($con, $query);
                                                             while($row = mysqli_fetch_assoc($result)){
@@ -220,7 +224,7 @@
 												<div class="input-group">
                                                     <select class="form-control" name="tutorCountry" id="tutorCountry">
                                                     <?php
-                                                        echo '<option value="" selected disabled>----- Country -----</option>';
+                                                        echo '<option value="0" selected disabled>----- Country -----</option>';
                                                         $query = "select * from country";
                                                         $result = mysqli_query($con, $query);
                                                         while($row = mysqli_fetch_assoc($result)){
@@ -240,9 +244,9 @@
 											<div class="form-group col-lg-6">
 												<label for="inputName">Date Of Enrollment</label>
 												<div class="input-group">
-													<input type="text" name="tutorEnrollDate" id="tutorEnrollDate" class="form-control" data-inputmask-alias="datetime" data-inputmask-inputformat="dd/mm/yyyy" data-mask value="<?php echo date('d/m/Y', strtotime($row0["account_enroll_date"])) ?>">
+													<input type="date" name="tutorEnrollDate" id="tutorEnrollDate" class="form-control" value="<?php echo date('Y-m-d', strtotime($row0["account_enroll_date"])) ?>">
 													<div class="input-group-prepend">
-														<span class="input-group-text"><i class="far fa-calendar-alt"></i></span>
+														<!-- <span class="input-group-text"><i class="far fa-calendar-alt"></i></span> -->
 													</div>
 												</div>
 											</div>

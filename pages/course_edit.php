@@ -49,9 +49,7 @@
 			}
 
 			$query = "UPDATE course SET course_code = '" . mysqli_real_escape_string($con, $_POST["courseCode"]) . "', 
-						course_name = '" . mysqli_real_escape_string($con, $_POST["courseName"]) . "', 
-						course_start_date = STR_TO_DATE('" . mysqli_real_escape_string($con, $_POST["courseStartDate"]) . "', '%d/%m/%Y'), 
-						course_end_date = STR_TO_DATE('" . mysqli_real_escape_string($con, $_POST["courseEndDate"]) . "', '%d/%m/%Y'),
+						course_name = '" . mysqli_real_escape_string($con, $_POST["courseName"]) . "', 				
 						course_status = '" . $courseStatus . "', 
 						course_description = '" . mysqli_real_escape_string($con, $_POST["courseDescription"]) . "' 
 						WHERE course_id = '" . mysqli_real_escape_string($con, $_POST["courseId"]) . "'";
@@ -119,7 +117,7 @@
 			<section class="content">
 				<form name="add_course" id="add_course" class="col-lg-12" method="POST">
 					<div class="row">
-						<div class="col-md-6">
+						<div class="col-md-12">
 							<div class="card card-primary">
 								<div class="card-header">
 									<h3 class="card-title">General</h3>
@@ -141,7 +139,7 @@
 										<input type="text" name="courseName" id="courseName" class="form-control" value="<?php echo htmlspecialchars($row0["course_name"]) ?>">
 									</div>
 									
-									<div class="form-group" style="margin-bottom:0px;">
+									<!-- <div class="form-group" style="margin-bottom:0px;">
 										<label for="courseStartDate">Course Date</label>
 										<div class="row">
 											<div class="form-group col-lg-6">
@@ -161,7 +159,7 @@
 												</div>
 											</div>
 										</div>
-									</div>
+									</div> -->
 									<div class="form-group" style="margin-bottom:0px;">
 										<div class="row">
 											<div class="form-group col-lg-6">
@@ -186,7 +184,7 @@
 							</div>
 							<!-- /.card -->
 						</div>
-						<div class="col-md-6">
+						<div class="col-md-12">
 							<div class="card card-secondary">
 								<div class="card-header">
 									<h3 class="card-title">Course Information</h3>
@@ -207,38 +205,59 @@
 											</div>
 											<!-- ./card-header -->
 											<div class="card-body p-0">
-												<table id="moduleTable" class="table table-hover">
-												<tbody>
-													<tr class="">
-														<td style='padding:10px;' colspan="3"><button type="button" id="addModule" class="btn btn-sm" style="background-color:transparent" ><i class="fas fa-plus"></i> Add New Module</button></td>
-													</tr>
-													<?php
-														$query1 = "SELECT * FROM course_module WHERE course_id = '".$row0["course_id"]."'";
-														$result1 = mysqli_query($con, $query1);
-														while($row1 = mysqli_fetch_assoc($result1)){
-															echo "<tr data-widget='expandable-table' aria-expanded='false' class=''><td style='padding:10px 24px;'>".
-															"<div class='form-group row'>".
-															"<label><i class='expandable-table-caret fas fa-caret-right fa-fw'></i>Code</label><div class='col-sm-6'><input type='text' name='moduleCode' class='form-control form-control-sm' value='".$row1["course_module_code"]."'></div></div></td>".
-															"<td style='padding:10px;'><div class='form-group row'><label>Name</label><div class='col-sm-6'><input type='text' name='moduleName' class='form-control form-control-sm moduleName' value='".$row1["course_module_name"]."'></div></div></td>".
-															"<td style='text-align: right;background-color: transparent;width: 120px;'><button class='btn btn-sm moduleDelBtn red-icon' data-moduleId='".$row1["course_module_id"]."'><i class='fa fa-trash-alt'></i></button><button class='btn btn-sm moduleSaveBtn green-icon' data-moduleId='".$row1["course_module_id"]."'><i class='fas fa-check'></i></button></td></tr>".
-															"<tr class='expandable-body'><td colspan='3'><div class='p-0'><table class='table table-hover'><tbody>".
-															"<tr><td style='padding:10px;' colspan='3'><button type='button' class='btn btn-sm addModuleCriteria' style='background-color:transparent' data-moduleId='".$row1["course_module_id"]."'><i class='fas fa-plus'></i> Add New Criteria</button></td></tr>";
+												<div style='overflow:auto; width:100%;position:relative;'>
+													<table id="moduleTable" class="table table-borderless">
+														<tbody>
+															<tr class="" style="color:red;">
+																<td style='padding:10px;' colspan="3"><button type="button" id="addModule" class="btn btn-sm" style="background-color:transparent" ><i class="fas fa-plus"></i> Add Module</button></td>
+															</tr>
+															<?php
+																$query1 = "SELECT * FROM course_module WHERE course_id = '".$row0["course_id"]."'";
+																$result1 = mysqli_query($con, $query1);
+																while($row1 = mysqli_fetch_assoc($result1)){
+																	echo "<tr data-widget='expandable-table' aria-expanded='false' class='' style='border-top:0.5pt solid #e0e0e0;'><td style='padding:10px 24px; width:300px;'>".
+																	"<div class='form-group row'>".
+																	"<label><i class='expandable-table-caret fas fa-caret-right fa-fw'></i>Module Number</label><div class='col-sm-6'><input type='text' name='moduleCode' class='form-control form-control-sm' value='".$row1["course_module_code"]."'></div></div></td>".
+																	"<td style='padding:10px; width:300px;'><div class='form-group row'><label>Module Name</label><div class='col-sm-6'><input type='text' name='moduleName' class='form-control form-control-sm moduleName' value='".$row1["course_module_name"]."'></div></div></td>".
+																	"<td style='text-align: right;background-color: transparent;width: 120px;'><button type='button' class='btn btn-sm moduleDelBtn red-icon' data-moduleId='".$row1["course_module_id"]."'><i class='fa fa-trash-alt'></i></button><button type='button' class='btn btn-sm moduleSaveBtn green-icon' data-moduleId='".$row1["course_module_id"]."'><i class='fas fa-check'></i></button></td></tr>".
+																	"<tr bgcolor='#e0e0e0' class='expandable-body'><td colspan='3'><div class='p-0'><table class='table'><tbody>".
+																	"<tr><td style='padding:0px 20px;'><button type='button' class='btn btn-sm addModuleCriteria' style='background-color:transparent' data-moduleId='".$row1["course_module_id"]."'><i class='fas fa-plus'></i> Add New Criteria</button></td></tr>";
 
-															$query2 = "SELECT * FROM course_module_criteria WHERE course_module_id = '".$row1["course_module_id"]."'";
-															$result2 = mysqli_query($con, $query2);
-															while($row2 = mysqli_fetch_assoc($result2)){
-															echo "<tr><td style='padding:10px;'><div class='form-group row' style='padding:0px 20px;'><label>Evaluation Criteria</label><div class='col-sm-6'>".
-															"<input type='text' name='moduleCriteriaName' class='form-control form-control-sm moduleCriteriaName'  value='".$row2["cmc_name"]."'></div></div>".
-															"</td><td style='text-align: right;background-color: transparent;'><button class='btn btn-sm moduleCriteriaDelBtn red-icon' data-moduleCriteriaId='".$row2["cmc_id"]."'>".
-															"<i class='fa fa-trash-alt'></i></button><button class='btn btn-sm moduleCriteriaSaveBtn green-icon' data-moduleCriteriaId='".$row2["cmc_id"]."'>".
-															"<i class='fas fa-check'></i></button></td></tr>";
-															}
-															echo "</tbody></table></div></td></tr>";
-														}
-													?>
-													
-												</tbody>
-												</table>
+																	$query2 = "SELECT * FROM course_module_criteria WHERE course_module_id = '".$row1["course_module_id"]."'";
+																	$result2 = mysqli_query($con, $query2);
+																	while($row2 = mysqli_fetch_assoc($result2)){
+																		echo "<tr data-widget='expandable-table' aria-expanded='false' class=''><td style='padding:10px; width:300px;'>".
+																		"<div class='form-group row' style='padding:0px 20px;'>".
+																		"<label><i class='expandable-table-caret fas fa-caret-right fa-fw'></i>Main Criteria</label><div class='col-sm-6'>".
+																		"<input type='text' name='moduleCriteriaName' class='form-control form-control-sm moduleCriteriaName'  value='".$row2["cmc_name"]."'></div></div>".
+																		"</td><td style='text-align: right;background-color: transparent; width:120px;'><button type='button' class='btn btn-sm moduleCriteriaDelBtn red-icon' data-moduleCriteriaId='".$row2["cmc_id"]."'>".
+																		"<i class='fa fa-trash-alt'></i></button><button type='button' class='btn btn-sm moduleCriteriaSaveBtn green-icon' data-moduleCriteriaId='".$row2["cmc_id"]."'>".
+																		"<i class='fas fa-check'></i></button></td></tr>".
+																		"<tr class='expandable-body'><td colspan='3'><div class='p-0'><table class='table'><tbody>".
+																		"<td style='padding:0px 20px;'><button type='button' class='btn btn-sm addModuleSubCriteria' style='background-color:transparent' data-moduleCriteriaId='".$row2["cmc_id"]."'><i class='fas fa-plus'></i> Add New Sub-Criteria</button></td></tr>";
+																		
+
+																		$query3 = "SELECT * FROM course_module_sub_criteria WHERE cmc_id = '".$row2["cmc_id"]."'";
+																		$result3 = mysqli_query($con, $query3);
+																		while($row3 = mysqli_fetch_assoc($result3)){
+																			echo "<tr class=''><td style='padding:5px 20px;'>".
+																			"<div class='form-group row' style='padding:5px 20px;'>".
+																			"<label>Sub Criteria</label><div class='col-sm-6'>".
+																			"<input type='text' name='moduleSubCriteriaName' class='form-control form-control-sm moduleSubCriteriaName'  value='".$row3["cms_name"]."'></div></div>".
+																			"</td><td style='text-align: right;background-color: transparent; width:120px;'><button type='button' class='btn btn-sm moduleSubCriteriaDelBtn red-icon' data-moduleSubCriteriaId='".$row3["cms_id"]."'>".
+																			"<i class='fa fa-trash-alt'></i></button><button type='button' class='btn btn-sm moduleSubCriteriaSaveBtn green-icon' data-moduleSubCriteriaId='".$row3["cms_id"]."'>".
+																			"<i class='fas fa-check'></i></button></td></tr>";																	
+																			//echo "</tbody></table></div></td></tr>";
+																		}
+																		echo "</tbody></table></div></td></tr>";
+																	}
+																	echo "</tbody></table></div></td></tr>";
+																}
+															?>
+															
+														</tbody>
+													</table>
+												</div>
 											</div>
 											<!-- /.card-body -->
 											</div>
@@ -251,27 +270,29 @@
 										</div>
 										<!-- ./card-header -->
 										<div class="card-body p-0">
-											<table id="groupTable" class="table table-hover">
-											<tbody>
-											<tr>
-												<td style='padding:10px;'><button type="button" id="addGroup" class="btn btn-sm" style="background-color:transparent" ><i class="fas fa-plus"></i> Add New Group</button></td>
-											</tr>
-											<?php
-												$query1 = "SELECT * FROM course_group WHERE course_id = '".$row0["course_id"]."'";
-												$result1 = mysqli_query($con, $query1);
-												while($row1 = mysqli_fetch_assoc($result1)){
-													echo "<tr class=''><td><div class='form-group row'><label>Name</label><div class='col-sm-6'>".
-													"<input type='text' name='groupName' class='form-control form-control-sm groupName' value='".$row1["group_name"]."'></div></div>".
-													"</td><td><div class='form-group row'><label>Capacity</label><div class='col-sm-6'>".
-													"<input type='text' name='groupCapacity' class='form-control form-control-sm groupCapacity' value='".$row1["group_capacity"]."'></div></div></td>".
-													"<td style='text-align: right;background-color: transparent; width:120px;'><button class='btn btn-sm groupDelBtn red-icon' data-groupId='".$row1["group_id"]."'>".
-													"<i class='fa fa-trash-alt'></i></button><button class='btn btn-sm groupSaveBtn green-icon' data-groupId='".$row1["group_id"]."'>".
-													"<i class='fas fa-check green-icon'></i></button></td></tr>";
-												}
-											?>
-												
-											</tbody>
-											</table>
+											<div style='overflow:auto; width:100%;position:relative;'>
+												<table id="groupTable" class="table ">
+												<tbody>
+												<tr>
+													<td style='padding:10px;'><button type="button" id="addGroup" class="btn btn-sm" style="background-color:transparent" ><i class="fas fa-plus"></i> Add New Group</button></td>
+												</tr>
+												<?php
+													$query1 = "SELECT * FROM course_group WHERE course_id = '".$row0["course_id"]."'";
+													$result1 = mysqli_query($con, $query1);
+													while($row1 = mysqli_fetch_assoc($result1)){
+														echo "<tr class=''><td><div class='form-group row'><label style='padding-left: 30px;'>Name</label><div class='col-sm-6'>".
+														"<input type='text' name='groupName' class='form-control form-control-sm groupName' value='".$row1["group_name"]."'></div></div><div class='form-group row'><label><i class=''></i> Start Date</label><div class='col-sm-6'>".
+														"<div class='input-group'><input type='date' name='groupStartDate' class='form-control form-control-sm dateMask' value='".$row1["group_start_date"]."'><div class='input-group-prepend'></div></div></div></div></div></td><td><div class='form-group row'><label>Capacity</label><div class='col-sm-6'>".
+														"<input type='number' name='groupCapacity' class='form-control form-control-sm groupCapacity' value='".$row1["group_capacity"]."'></div></div><div class='form-group row'><label>End Date</label><div class='col-sm-6' ><div class='input-group'><input type='date' name='groupEndDate' class='form-control form-control-sm dateMask' value='".$row1["group_end_date"]."'><div class='input-group-prepend'></div></div></div></div></td>".
+														"<td style='text-align: right;background-color: transparent; width:120px;'><button type='button' class='btn btn-sm groupDelBtn red-icon' data-groupId='".$row1["group_id"]."'>".
+														"<i class='fa fa-trash-alt'></i></button><button type='button' class='btn btn-sm groupSaveBtn green-icon' data-groupId='".$row1["group_id"]."'>".
+														"<i class='fas fa-check green-icon'></i></button></td></tr>";
+													}
+												?>
+													
+												</tbody>
+												</table>
+											</div>
 										</div>
 										<!-- /.card-body -->
 										
@@ -285,7 +306,7 @@
 											</div>
 											<div class="form-group col-lg-6">
 												<div class="input-group">
-													<button type="submit" id="submitCourseForm" class="btn btn-primary btn-block">Update Course <i class="fa fa-arrow-right"></i></button>
+													<button type="button" id="submitCourseForm" class="btn btn-primary btn-block"  onclick="form_validation()">Update Course <i class="fa fa-arrow-right"></i></button>
 												</div>
 											</div>
 										</div>
@@ -340,26 +361,41 @@
 
 		window.onpageshow = function(event) {	// The document.ready function will not be called when running window.history, so use this instead.
 			if(localStorage.getItem("courseCodeUsed")=="1"){
+				toastr.remove();
 				toastr.error('Course code has been registered. Kindly change the course code.');
 				localStorage.clear();
 			}
 
 			if(localStorage.getItem("Updated")=="1"){
+				toastr.remove();
                 toastr.success('Course has been updated successfully.');
                 localStorage.clear();
             }
 		};
+
+		function form_validation(){
+			document.forms["add_course"].submit();
+		}
 		
 		$(function() {
 
+			$('input[type="text"], button').click(function(e) {
+				$(this).closest('tr').attr('aria-expanded', 'false');
+			});
+
+			$(document).keypress(function (e) {
+				if(e.which == 13 || e.which == 13) 
+					return false;
+			});
+
 			$("#addModule").click(function(){
 				var tbl = $("#moduleTable");
-				$("<tr class=''><td style='padding:10px 24px;'><div class='form-group row' ><label><i class='expandable-table-caret fas fa-plus fa-fw'></i>Code</label>"+
+				$("<tr class='' style='color:red;'><td style='padding:10px 24px;'><div class='form-group row' ><label><i class='expandable-table-caret fas fa-plus fa-fw' style='color:red;'></i> New Module Number</label>"+
 				"<div class='col-sm-6'><input type='text' name='moduleCode' class='form-control form-control-sm moduleCode'></div>"+
-				"</div></td><td style='padding:10px;'><div class='form-group row'><label>Name</label><div class='col-sm-6'>"+
+				"</div></td><td style='padding:10px;'><div class='form-group row'><label>Module Name</label><div class='col-sm-6'>"+
 				"<input type='text' name='moduleName' class='form-control form-control-sm moduleName'></div></div>"+
-				"</td><td style='text-align: right;background-color: transparent;width:120px;'><button class='btn btn-sm moduleDelBtn red-icon'>"+
-				"<i class='fa fa-trash-alt'></i></button><button class='btn btn-sm moduleSaveBtn green-icon'><i class='fas fa-check'></i></button>"+
+				"</td><td style='text-align: right;background-color: transparent;'><button type='button' class='btn btn-sm moduleDelBtn red-icon'>"+
+				"<i class='fa fa-trash-alt'></i></button><button type='button' class='btn btn-sm moduleSaveBtn green-icon'><i class='fas fa-check'></i></button>"+
 				"</td></tr>").appendTo(tbl);
 			});
 
@@ -367,34 +403,46 @@
 				var tbl = $(this).closest('table');
 				var moduleId = $(this).attr('data-moduleId');
 
-				$("<tr><td style='padding:10px;'><div class='form-group row' style='padding:0px 20px;'><label>Evaluation Criteria</label>"+
+				$("<tr><td style='padding:10px 20px; color:red;'><div class='form-group row' style='padding:0px 15px;'><label><i class='fas fa-plus'></i> New Main Criteria</label>"+
 				"<div class='col-sm-6'><input type='text' name='moduleCriteriaName' class='form-control form-control-sm moduleCriteriaName'></div>"+
-				"</div></td><td style='text-align: right;background-color: transparent;width: 120px;'><button class='btn btn-sm moduleCriteriaDelBtn red-icon' data-moduleId='"+moduleId+"'>"+
-				"<i class='fa fa-trash-alt'></i></button><button class='btn btn-sm moduleCriteriaSaveBtn green-icon' data-moduleId='"+moduleId+"'><i class='fas fa-check'></i></button>"+
+				"</div></td><td style='text-align: right;background-color: transparent;width: 120px;'><button type='button' class='btn btn-sm moduleCriteriaDelBtn red-icon' data-moduleId='"+moduleId+"'>"+
+				"<i class='fa fa-trash-alt'></i></button><button type='button' class='btn btn-sm moduleCriteriaSaveBtn green-icon' data-moduleId='"+moduleId+"'><i class='fas fa-check'></i></button>"+
+				"</td></tr>").appendTo(tbl);
+			});
+			
+			$(document.body).delegate(".addModuleSubCriteria", "click", function(){
+				var tbl = $(this).closest('table');
+				var moduleCriteriaId = $(this).attr('data-moduleCriteriaId');
+
+				$("<tr><td style='padding:10px 15px; color:red;'><div class='form-group row' style='padding:0px 20px;'><label><i class='fas fa-plus'></i> New Sub Criteria</label>"+
+				"<div class='col-sm-6'><input type='text' name='moduleSubCriteriaName' class='form-control form-control-sm moduleSubCriteriaName'></div>"+
+				"</div></td><td style='text-align: right;background-color: transparent;width: 120px;'><button type='button' class='btn btn-sm moduleSubCriteriaDelBtn red-icon' data-moduleCriteriaId='"+moduleCriteriaId+"'>"+
+				"<i class='fa fa-trash-alt'></i></button><button type='button' class='btn btn-sm moduleSubCriteriaSaveBtn green-icon' data-moduleCriteriaId='"+moduleCriteriaId+"'><i class='fas fa-check'></i></button>"+
 				"</td></tr>").appendTo(tbl);
 			});
 
 			$("#addGroup").click(function(){
 				var tbl = $("#groupTable");
 
-				$("<tr class=''><td><div class='form-group row'><label>Name</label><div class='col-sm-6'>"+
-				"<input type='text' name='groupName' class='form-control form-control-sm'></div></div></td>"+
+				$("<tr class=''style='color:red;'><td><div class='form-group row'><label><i class='fas fa-plus'></i> New Name</label><div class='col-sm-6'>"+
+				"<input type='text' name='groupName' class='form-control form-control-sm'></div></div><div class='form-group row'><label><i class=''>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</i> Start Date</label><div class='col-sm-6'>"+
+				"<div class='input-group'><input type='date' name='groupStartDate' class='form-control form-control-sm' ><div class='input-group-prepend'></div></div></div></div></div></td>"+
 				"<td><div class='form-group row'><label>Capacity</label><div class='col-sm-6'>"+
-				"<input type='text' name='groupCapacity' class='form-control form-control-sm groupCapacity'></div></div>"+
-				"</td><td style='text-align: right;background-color: transparent;width: 120px;'><button class='btn btn-sm groupDelBtn red-icon'>"+
-				"<i class='fa fa-trash-alt'></i></button><button class='btn btn-sm groupSaveBtn green-icon'><i class='fas fa-check'></i></button>"+
+				"<input type='number' name='groupCapacity' class='form-control form-control-sm groupCapacity'></div></div><div class='form-group row'><label>End Date</label><div class='col-sm-6'>"+
+				"<div class='input-group'><input type='date' name='groupEndDate' class='form-control form-control-sm' ><div class='input-group-prepend'></div></div></div></div>"+
+				"</td><td style='text-align: right;background-color: transparent;width: 120px;'><button type='button' class='btn btn-sm groupDelBtn red-icon'>"+
+				"<i class='fa fa-trash-alt'></i></button><button type='button' class='btn btn-sm groupSaveBtn green-icon'><i class='fas fa-check'></i></button>"+
 				"</td></tr>").appendTo(tbl);
 			});
 
-			$(document.body).delegate(".moduleSaveBtn", "click", function(){
+			$(document.body).delegate(".moduleSaveBtn", "click", function(){ 
 				var tbl = $("#moduleTable");
 				var moduleCode = $(this).closest("tr").find("input[name='moduleCode']").val();
 				var moduleName = $(this).closest("tr").find("input[name='moduleName']").val();
 				var courseId = $("#courseId").val();
 				var moduleId = $(this).attr('data-moduleId');
 				
-
-				if(moduleId != undefined){
+				if(moduleId != undefined){ 
 					var flag = "update";
 					var url = "../pages/includes/update_course_module.php";
 				} else {
@@ -412,22 +460,26 @@
 						moduleCode: moduleCode,
 						moduleName: moduleName
 					}
-				}).done(function(response){
+				}).done(function(response){ 
 					if(flag == "add"){
 						$("<tr data-widget='expandable-table' aria-expanded='true' class=''><td>"+
 						"<div class='form-group row'>"+
-						"<label><i class='expandable-table-caret fas fa-caret-right fa-fw'></i>Code</label><div class='col-sm-6'><input type='text' name='moduleCode' class='form-control form-control-sm' value='"+moduleCode+"'></div></div></td>"+
-						"<td><div class='form-group row'><label>Name</label><div class='col-sm-6'><input type='text' name='moduleName' class='form-control form-control-sm moduleName' value='"+moduleName+"'></div></div></td>"+
-						"<td style='text-align: right;background-color: transparent;width:120px;'><button class='btn btn-sm moduleDelBtn red-icon' data-moduleId='"+response+"'><i class='fa fa-trash-alt'></i></button><button class='btn btn-sm moduleSaveBtn green-icon' data-moduleId='"+response+"'><i class='fas fa-check'></i></button></td></tr>"+
-						"<tr class='expandable-body'><td colspan='3'><div class='p-0'><table class='table table-hover'><tbody>"+
+						"<label><i class='expandable-table-caret fas fa-caret-right fa-fw'></i>Module Number</label><div class='col-sm-6'><input type='text' name='moduleCode' class='form-control form-control-sm' value='"+moduleCode+"'></div></div></td>"+
+						"<td><div class='form-group row'><label>Module Name</label><div class='col-sm-6'><input type='text' name='moduleName' class='form-control form-control-sm moduleName' value='"+moduleName+"'></div></div></td>"+
+						"<td style='text-align: right;background-color: transparent;width:120px;'><button type='button' class='btn btn-sm moduleDelBtn red-icon' data-moduleId='"+response+"'><i class='fa fa-trash-alt'></i></button><button type='button' class='btn btn-sm moduleSaveBtn green-icon' data-moduleId='"+response+"'><i class='fas fa-check'></i></button></td></tr>"+
+						"<tr bgcolor='#e0e0e0' class='expandable-body'><td colspan='3'><div class='p-0'><table class='table'><tbody>"+
 						"<tr><td style='padding:10px;'><button type='button' class='btn btn-sm addModuleCriteria' style='background-color:transparent' data-moduleId='"+response+"'><i class='fas fa-plus'></i> Add New Criteria</button></td></tr></tbody></table></div></td></tr>"
 						).appendTo(tbl);
+					} else {
+						toastr.remove();
+						toastr.success('Module has been updated successfully.');
 					}
 					console.log(response);
 				});
 			});
 				
-			$(document.body).delegate(".moduleDelBtn", "click", function(){
+			$(document.body).delegate(".moduleDelBtn", "click", function(event){ 
+
 				var moduleId = $(this).attr('data-moduleId');
 				var $tr = $(this).closest('tr');
 
@@ -453,13 +505,13 @@
 				}
 			});    
 
-			$(document.body).delegate(".moduleCriteriaSaveBtn", "click", function(){
+			$(document.body).delegate(".moduleCriteriaSaveBtn", "click", function(){ //alert("YO")
 				var tbl = $(this).closest('table');
 				var moduleCriteriaName = $(this).closest("tr").find("input[name='moduleCriteriaName']").val();
 				var moduleId = $(this).attr('data-moduleId');
 				var moduleCriteriaId = $(this).attr('data-moduleCriteriaId');
 				
-				if(moduleCriteriaId != undefined){
+				if(moduleCriteriaId != undefined){ //alert("YO")
 					var flag = "update";
 					var url = "../pages/includes/update_course_module_criteria.php";
 				} else {
@@ -479,13 +531,16 @@
 				}).done(function(response){
 					if(flag == "add"){
 
-
-
-						$("<tr><td style='padding:10px;'><div class='form-group row' style='padding:0px 20px;'><label>Evaluation Criteria</label><div class='col-sm-6'>"+
+						$("<tr  data-widget='expandable-table' aria-expanded='true' class=''><td style='padding:10px;'><div class='form-group row' style='padding:0px 20px;'>"+
+						"<label><i class='expandable-table-caret fas fa-caret-right fa-fw'></i>Main Criteria</label><div class='col-sm-6'>"+
 						"<input type='text' name='moduleCriteriaName' class='form-control form-control-sm moduleCriteriaName'  value='"+moduleCriteriaName+"'></div></div>"+
-						"</td><td style='text-align: right;background-color: transparent; width:120px;'><button class='btn btn-sm moduleCriteriaDelBtn red-icon' data-moduleCriteriaId='"+response+"'>"+
-						"<i class='fa fa-trash-alt'></i></button><button class='btn btn-sm moduleCriteriaSaveBtn green-icon' data-moduleCriteriaId='"+response+"'>"+
-						"<i class='fas fa-check'></i></button>	</td></tr>").appendTo(tbl);
+						"</td><td style='text-align: right;background-color: transparent; width:120px;'><button type='button' class='btn btn-sm moduleCriteriaDelBtn red-icon' data-moduleCriteriaId='"+response+"'>"+
+						"<i class='fa fa-trash-alt'></i></button><button type='button' class='btn btn-sm moduleCriteriaSaveBtn green-icon' data-moduleCriteriaId='"+response+"'>"+
+						"<i class='fas fa-check'></i></button>	</td></tr><tr class='expandable-body'><td colspan='3'><div class='p-0'><table class='table'><tbody>"+
+						"<td style='padding:0px 20px;' colspan='3'><button type='button' class='btn btn-sm addModuleSubCriteria' style='background-color:transparent' data-moduleCriteriaId='"+moduleCriteriaId+"'><i class='fas fa-plus'></i> Add New Sub-Criteria</button></td></tr>").appendTo(tbl);
+					} else {
+						toastr.remove();
+						toastr.success('Module criteria has been updated successfully.');
 					}
 					console.log(response);
 				});
@@ -509,10 +564,72 @@
 				}
 			});
 
+			$(document.body).delegate(".moduleSubCriteriaSaveBtn", "click", function(){
+				var tbl = $(this).closest('table');
+				var moduleSubCriteriaName = $(this).closest("tr").find("input[name='moduleSubCriteriaName']").val();
+				var moduleCriteriaId = $(this).attr('data-moduleCriteriaId');
+				var moduleSubCriteriaId = $(this).attr('data-moduleSubCriteriaId');
+				// $(this).closest("tr").remove();
+				
+				if(moduleSubCriteriaId != undefined){
+					var flag = "update";
+					var url = "../pages/includes/update_course_module_sub_criteria.php";
+				} else {
+					var flag = "add";
+					var url = "../pages/includes/add_course_module_sub_criteria.php";
+					$(this).closest("tr").remove();
+				}
+
+				jQuery.ajax({
+					type: "POST",
+					url: url,
+					data: {
+						moduleCriteriaId: moduleCriteriaId,
+						moduleSubCriteriaId: moduleSubCriteriaId,						
+						moduleSubCriteriaName: moduleSubCriteriaName
+					}
+				}).done(function(response){
+					if(flag == "add"){
+
+						$("<tr class=''><td style='padding:5px 20px;'><div class='form-group row' style='padding:0px 20px;'>"+
+						"<label>Sub Criteria</label><div class='col-sm-6'>"+
+						"<input type='text' name='moduleSubCriteriaName' class='form-control form-control-sm moduleSubCriteriaName'  value='"+moduleSubCriteriaName+"'></div></div>"+
+						"</td><td style='text-align: right;background-color: transparent; width:120px;'><button type='button' class='btn btn-sm moduleSubCriteriaDelBtn red-icon' data-moduleSubCriteriaId='"+response+"'>"+
+						"<i class='fa fa-trash-alt'></i></button><button type='button' class='btn btn-sm moduleSubCriteriaSaveBtn green-icon' data-moduleSubCriteriaId='"+response+"'>"+
+						"<i class='fas fa-check'></i></button></td></tr>").appendTo(tbl);
+					} else {
+						toastr.remove();
+						toastr.success('Module Sub-criteria has been updated successfully.');
+					}
+					console.log(response);
+				});
+			});
+			
+				
+			$(document.body).delegate(".moduleSubCriteriaDelBtn", "click", function(){
+				var moduleSubCriteriaId = $(this).attr('data-moduleSubCriteriaId');
+				$(this).closest("tr").remove();
+
+				if(moduleSubCriteriaId != undefined){
+					jQuery.ajax({
+						type: "POST",
+						url: "../pages/includes/delete_course_module_sub_criteria.php",
+						data: {
+							moduleSubCriteriaId: moduleSubCriteriaId
+						}
+					}).done(function(response){
+						console.log(response);
+					});
+						
+				}
+			});
+
 			$(document.body).delegate(".groupSaveBtn", "click", function(){
 				var tbl = $("#groupTable");
 				var groupName = $(this).closest("tr").find("input[name='groupName']").val();
 				var groupCapacity = $(this).closest("tr").find("input[name='groupCapacity']").val();
+				var groupStartDate = $(this).closest("tr").find("input[name='groupStartDate']").val();
+				var groupEndDate = $(this).closest("tr").find("input[name='groupEndDate']").val();
 				var groupId = $(this).attr('data-groupId');
 				var courseId = $("#courseId").val();
 				$(this).closest("tr").remove();
@@ -529,18 +646,22 @@
 					data: {
 						courseId: courseId,
 						groupName: groupName,
+						groupStartDate: groupStartDate,
+						groupEndDate: groupEndDate,
 						groupCapacity: groupCapacity,
 						groupId: groupId
 					}
 				}).done(function(response){
 					
 					$("<tr class=''><td><div class='form-group row'><label>Name</label><div class='col-sm-6'>"+
-					"<input type='text' name='groupName' class='form-control form-control-sm groupName' value='"+groupName+"'></div></div>"+
-					"</td><td><div class='form-group row'><label>Capacity</label><div class='col-sm-6'>"+
-					"<input type='text' name='groupCapacity' class='form-control form-control-sm groupCapacity' value='"+groupCapacity+"'></div></div></td>"+
-					"<td style='text-align: right;background-color: transparent;width: 120px;'><button class='btn btn-sm groupDelBtn red-icon' data-groupId='"+response+"'>"+
-					"<i class='fa fa-trash-alt'></i></button><button class='btn btn-sm groupSaveBtn green-icon' data-groupId='"+response+"'>"+
-					"<i class='fas fa-check'></i></button>	</td></tr>").appendTo(tbl);
+					"<input type='text' name='groupName' class='form-control form-control-sm groupName' value='"+groupName+"'></div></div><div class='form-group row'><label><i class=''></i> Start Date</label><div class='col-sm-6'>"+
+					"<div class='input-group'><input type='date' name='groupStartDate' class='form-control form-control-sm' value='"+groupStartDate+"'><div class='input-group-prepend'></div></div></div></div></div></td>"+
+					"<td><div class='form-group row'><label>Capacity</label><div class='col-sm-6'>"+
+					"<input type='number' name='groupCapacity' class='form-control form-control-sm groupCapacity'  value='"+groupCapacity+"'></div></div><div class='form-group row'><label>End Date</label><div class='col-sm-6'>"+
+					"<div class='input-group'><input type='date' name='groupEndDate' class='form-control form-control-sm' value='"+groupEndDate+"'><div class='input-group-prepend'></div></div></div></div></td>"+
+					"<td style='text-align: right;background-color: transparent;'><button type='button' class='btn btn-sm groupDelBtn red-icon' data-groupId='"+response+"'>"+
+					"<i class='fa fa-trash-alt'></i></button><button type='button' class='btn btn-sm groupSaveBtn green-icon' data-groupId='"+response+"'><i class='fas fa-check'></i></button>"+
+					"</td></tr>").appendTo(tbl);
 					console.log(response);
 				});
 			});
@@ -564,9 +685,11 @@
 			});    
 
 
-			$('#datemask').inputmask('dd/mm/yyyy', {
-				'placeholder': 'dd/mm/yyyy'
-			})
+			$(document).on("focus", ".dateMask", function() {
+				$(this).inputmask('dd/mm/yyyy', {
+					'placeholder': 'dd/mm/yyyy'
+				})
+			});
 
 			$('[data-mask]').inputmask()
 
@@ -589,13 +712,14 @@
 					courseEmail: {
 						required: true,
 						email: true
-					},
-					courseStartDate: {
-						required: true
-					},
-					courseEndDate: {
-						required: true
 					}
+					// ,
+					// courseStartDate: {
+					// 	required: true
+					// },
+					// courseEndDate: {
+					// 	required: true
+					// }
 				},
 				messages: {
 					courseCode: {
@@ -603,13 +727,14 @@
 					},
 					courseName: {
 						required: "Please enter a course name"
-					},
-					courseStartDate: {
-						required: "Please enter the start date"
-					},
-					courseEndDate: {
-						required: "Please enter the end date"
 					}
+					// ,
+					// courseStartDate: {
+					// 	required: "Please enter the start date"
+					// },
+					// courseEndDate: {
+					// 	required: "Please enter the end date"
+					// }
 				},
 				errorElement: 'span',
 				errorPlacement: function (error, element) {
